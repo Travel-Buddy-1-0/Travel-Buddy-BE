@@ -65,5 +65,15 @@ namespace Repositories
                 .Single();
             return response;
         }
+        public async Task<User> UpdateUserByEmailAsync(string email, User updatedUser)
+        {
+            var response = await _supabase
+                .From<User>()
+                .Filter("email", Operator.Equals, email)
+                .Update(updatedUser);
+
+            return response.Models.First();
+        }
+
     }
 }

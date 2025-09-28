@@ -30,5 +30,7 @@ namespace BusinessObject.Models
 
         [Column("restaurant_id")]
         public int? RestaurantId { get; set; }
+        [Column("tags")]
+        public string? Tags { get; set; }
     }
 }

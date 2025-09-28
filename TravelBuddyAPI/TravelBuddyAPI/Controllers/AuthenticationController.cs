@@ -20,7 +20,7 @@ namespace TravelBuddyAPI.Controllers
             _userService = userService;
         }
         [HttpPost("register")]
-        public async Task<IResult> Register(RegisterRequestDto request)
+        public async Task<IResult> Register([FromBody] RegisterRequestDto request)
         {
             try
             {
@@ -79,7 +79,7 @@ namespace TravelBuddyAPI.Controllers
             }
         }
         [HttpPost("confirmRegister")]
-        public async Task<IActionResult> ConfirmRegister([FromQuery] ConfirmRegisterRequestDto request)
+        public async Task<IActionResult> ConfirmRegister([FromBody] ConfirmRegisterRequestDto request)
         {
             try
             {

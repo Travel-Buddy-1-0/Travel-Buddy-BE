@@ -100,12 +100,13 @@ public class UserService : IUserService
         return user;
     }
 
-    public async Task<UserDto> UpdateUserProfileAsync(int userId, UserProfileUpdateDto updatedProfile)
+    public async Task<UserDto> UpdateUserProfileAsync(string email,UserProfileUpdateDto updatedProfile)
     {
-        var userToUpdate = await _userRepository.GetUserByIdAsync(userId);
+        
+        var userToUpdate = await _userRepository.GetUserByEmailAsync(email);
         if (userToUpdate == null)
         {
-            throw new NotFoundException($"User with ID {userId} not found.");
+            throw new NotFoundException($"User with Email {updatedProfile.Email} not found.");
         }
 
 
@@ -118,7 +119,7 @@ public class UserService : IUserService
         userToUpdate.Photo = updatedProfile.Image ?? userToUpdate.Photo;
 
         // Use a dedicated method in the repository for updates
-        var updatedUser = await _userRepository.UpdateUserAsync(userToUpdate);
+        var updatedUser = await _userRepository.UpdateUserByEmailAsync(updatedProfile.Email, userToUpdate);
         return new UserDto
         {
             Email = updatedUser.Email,
