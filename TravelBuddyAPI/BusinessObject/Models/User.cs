@@ -32,7 +32,7 @@ public class User : BaseModel
     public DateTime? RegistrationDate { get; set; }
 
     [Column("photo")]
-    public JsonObject? Photo { get; set; }
+    public string? Photo { get; set; }
 
     [Column("role")]
     public string Role { get; set; } = null!;

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Supabase.Gotrue;
 using System.Net;
-using TravelBuddyAPI.DTOs;
+using BusinessObject.DTOs;
 using Supabase;
 namespace TravelBuddyAPI.Controllers
 {
@@ -17,7 +17,7 @@ namespace TravelBuddyAPI.Controllers
             _logger = logger;
         }
         [HttpPost("register")]
-        public async Task<IResult> Register(UserDto request)
+        public async Task<IResult> Register(RegisterRequestDto request)
         {
             try
             {

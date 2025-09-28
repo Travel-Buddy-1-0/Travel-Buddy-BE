@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using TravelBuddyAPI.DTOs;
+using BusinessObject.DTOs;
 namespace TravelBuddyAPI.Validation.User
 
 {

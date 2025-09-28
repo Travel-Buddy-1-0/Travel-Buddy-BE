@@ -1,17 +1,16 @@
 ﻿using System.Text.Json.Nodes;
 
-namespace TravelBuddyAPI.DTOs
+namespace BusinessObject.DTOs
 {
     public class UserDto
     {
         public string? Username { get; set; } = null!;
-        public string Password { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string? FullName { get; set; } = null!;
         public string? PhoneNumber { get; set; }
         public DateOnly? DateOfBirth { get; set; }
         public DateTime RegistrationDate { get; set; }
-        public JsonObject? Photo { get; set; }
+        public string? Photo { get; set; }
         public string Role { get; set; } = null!;
         public string? Sex { get; set; }
     }

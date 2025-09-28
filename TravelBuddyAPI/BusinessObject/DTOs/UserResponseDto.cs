@@ -1,4 +1,4 @@
-﻿namespace TravelBuddyAPI.DTOs
+﻿namespace BusinessObject.DTOs
 {
     public class UserResponseDto
     {

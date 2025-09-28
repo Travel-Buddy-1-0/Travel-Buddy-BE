@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace TravelBuddyAPI.DTOs
+namespace BusinessObject.DTOs
 {
     public class ConfirmRegisterRequestDto
     {
