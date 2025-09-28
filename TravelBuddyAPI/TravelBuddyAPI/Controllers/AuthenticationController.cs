@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BusinessLogic.Services;
+using BusinessObject.DTOs;
+using Microsoft.AspNetCore.Mvc;
+using Supabase;
 using Supabase.Gotrue;
 using System.Net;
-using BusinessObject.DTOs;
-using Supabase;
 namespace TravelBuddyAPI.Controllers
 {
     [ApiController]
@@ -11,10 +12,12 @@ namespace TravelBuddyAPI.Controllers
     {
         private readonly Supabase.Client _client;
         private readonly ILogger<AuthenticationController> _logger;
-        public AuthenticationController(Supabase.Client client, ILogger<AuthenticationController> logger)
+        private readonly IUserService _userService;
+        public AuthenticationController(Supabase.Client client, ILogger<AuthenticationController> logger, IUserService userService)
         {
             _client = client;
             _logger = logger;
+            _userService = userService;
         }
         [HttpPost("register")]
         public async Task<IResult> Register(RegisterRequestDto request)
@@ -48,6 +51,33 @@ namespace TravelBuddyAPI.Controllers
                 });
             }
         }
+        [HttpGet("getUser")]
+        public async Task<IActionResult> GetUser([FromQuery] string accessToken)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(accessToken))
+                    return BadRequest(new { error = "Missing access token" });
+                var user = await _client.Auth.GetUser(accessToken);
+                if (user == null)
+                    return NotFound(new { error = "User not found" });
+                var userModel = await _userService.GetUserByEmailAsync(user.Email);
+                return Ok(new UserDto
+                {
+                    Email = userModel.Email,
+                    FullName = userModel.FullName,
+                    PhoneNumber = userModel.PhoneNumber,
+                    DateOfBirth = userModel.DateOfBirth,
+                    Sex = userModel.Sex,
+                    Photo = userModel.Photo
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetUser");
+                return StatusCode(500, new { error = "Internal server error" });
+            }
+        }
         [HttpPost("confirmRegister")]
         public async Task<IActionResult> ConfirmRegister([FromQuery] ConfirmRegisterRequestDto request)
         {
@@ -68,10 +98,9 @@ namespace TravelBuddyAPI.Controllers
                 };
                 if (user1 == null)
                     return BadRequest(new { error = "User not found" });
-                var response = await _client.From<BusinessObject.Models.User>().Insert(newUser);
-
+                var response = await _userService.CreateUserAsync(newUser);
                 _logger.LogInformation($"User {user1.Email} registered and saved to DB.");
-                return Ok(response.Models);
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -99,6 +128,7 @@ namespace TravelBuddyAPI.Controllers
                 {
                     return Results.BadRequest("Unable to login");
                 }
+                //var user = await _client.Auth.GetUser(session.AccessToken);
                 var userResponse = new UserResponseDto
                 {
                     AccessToken = session.AccessToken,
@@ -106,6 +136,7 @@ namespace TravelBuddyAPI.Controllers
                     ExpiresIn = session.ExpiresIn,
                     TokenType = session.TokenType
                 };
+                //await _client.Auth.SetSession(request.AccessToken, request.RefreshToken);
                 return Results.Ok(userResponse);
             }
             catch (Exception ex)
@@ -212,6 +243,69 @@ namespace TravelBuddyAPI.Controllers
                     Detail = "An error occurred while logging in the user.",
                     Instance = Request.Path
                 });
+            }
+        }
+        [HttpGet("login-google")]
+        public async Task<IActionResult> LoginWithGoogle()
+        {
+            try
+            {
+                var options = new SignInOptions
+                {
+                    RedirectTo = "https://localhost:7056/Authentication/oauth-callback" // cái này Hưng sử url để gọi về google-session truyền 2 cái token vào là được
+                };
+
+                // Lấy URL để redirect user sang Google login
+                var url = _client.Auth.SignIn(Constants.Provider.Google, options);
+                return Ok(url.Result.Uri);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in Google Login");
+                return BadRequest(new ProblemDetails
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Title = "Google Login Failed",
+                    Detail = "An error occurred while starting Google login.",
+                    Instance = Request.Path
+                });
+            }
+        }
+
+        [HttpPost("google-session")]
+        public async Task<IActionResult> GoogleSession([FromBody] ConfirmRegisterRequestDto dto)
+        {
+            try
+            {
+                await _client.Auth.SetSession(dto.AccessToken, dto.RefreshToken);
+                var user = await _client.Auth.GetUser(dto.AccessToken);
+                if (user == null)
+                    return BadRequest(new { error = "User not found" });
+
+                var userModel = await _userService.GetUserByEmailAsync(user.Email);
+                if (userModel == null)
+                {
+                    var newUser = new BusinessObject.Models.User
+                    {
+                        Email = user.Email,
+                        FullName = userModel.FullName,
+                        Photo = userModel.Photo,
+                        RegistrationDate = DateTime.Now
+                    };
+                    await _userService.CreateUserAsync(newUser);
+                }
+
+                return Ok(new
+                {
+                    Email = user.Email,
+                    Name = userModel.FullName,
+                    Avatar = userModel.Photo
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GoogleSession");
+                return BadRequest(new { error = "Google session error" });
             }
         }
     }
