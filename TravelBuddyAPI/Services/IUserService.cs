@@ -1,0 +1,15 @@
+﻿using BusinessObject.DTOs;
+using BusinessObject.Models;
+
+namespace BusinessLogic.Services;
+
+public interface IUserService
+{
+    Task<List<User>> GetAllUsersAsync();
+    Task<UserDto> GetUserByIdAsync(int userId);
+    Task<User> CreateUserAsync(User newUser);
+    Task<UserDto> UpdateUserProfileAsync(int userId, UserProfileUpdateDto updatedProfile);
+    Task DeleteUserAsync(string email);
+    Task<User> LoginAsync(string email, string password);
+    Task<User> GetUserByEmailAsync(string email);
+}

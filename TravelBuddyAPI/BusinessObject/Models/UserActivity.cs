@@ -1,35 +1,24 @@
-﻿using Newtonsoft.Json.Linq;
-using Supabase.Postgrest.Models;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
+﻿using Supabase.Postgrest.Models;
+using Supabase.Postgrest.Attributes;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
-namespace BusinessObject.Models
+
+namespace BusinessObject.Models;
+
+[Table("useractivity")]
+public class UserActivity : BaseModel
 {
-    [Table("UserActivity")]
-    public class UserActivity : BaseModel
-    {
-        [Key]
-        [Column("activity_id")]
-        public int ActivityId { get; set; }
+    [PrimaryKey("activity_id", false)]
+    public int ActivityId { get; set; }
 
-        [ForeignKey("User")]
-        [Column("user_id")]
-        public int UserId { get; set; }
-        public User User { get; set; }
+    [Column("user_id")]
+    public int? UserId { get; set; }
 
-        [Column("activity_type")]
-        [StringLength(50)]
-        public string? ActivityType { get; set; }
+    [Column("activity_type")]
+    public string? ActivityType { get; set; }
 
-        [Column("activity_date")]
-        public DateTime ActivityDate { get; set; } = DateTime.UtcNow;
+    [Column("activity_date")]
+    public DateTime? ActivityDate { get; set; }
 
-        [Column("Metadata", TypeName = "jsonb")]
-        public JsonObject? Metadata { get; set; }
-    }
+    [Column("metadata")]
+    public JsonObject? Metadata { get; set; }
 }
