@@ -4,6 +4,7 @@ namespace BusinessObject.DTOs
 {
     public class UserDto
     {
+        //public int UserId { get; set; }
         public string? Username { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string? FullName { get; set; } = null!;
@@ -15,6 +16,11 @@ namespace BusinessObject.DTOs
         public string? Sex { get; set; }
     }
 
+    public class AuthRequestDto
+    {
+        public string AccessToken { get; set; } = null!;
+        public string RefreshToken { get; set; } = null!;
+    }
     public class UpdatePasswordDto
     {
         public string AccessToken { get; set; } = null!;
