@@ -1,43 +1,26 @@
 ﻿using Supabase.Postgrest.Models;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Supabase.Postgrest.Attributes;
 
-namespace BusinessObject.Models
+namespace BusinessObject.Models;
+
+[Table("tour")]
+public class Tour : BaseModel
 {
-    [Table("Tours")]
-    public class Tour : BaseModel
-    {
-        [Key]
-        [Column("tour_id")]
-        public int TourId { get; set; }
+    [PrimaryKey("tour_id", false)]
+    public int TourId { get; set; }
 
-        [Required, StringLength(100)]
-        [Column("title")]
-        public string Title { get; set; }
+    [Column("title")]
+    public string Title { get; set; } = null!;
 
-        [Column("description")]
-        public string? Description { get; set; }
+    [Column("description")]
+    public string? Description { get; set; }
 
-        [Column("duration")]
-        public int? Duration { get; set; }
+    [Column("duration")]
+    public int? Duration { get; set; }
 
-        [Column("price", TypeName = "decimal(10,2)")]
-        public decimal? Price { get; set; }
+    [Column("price")]
+    public decimal? Price { get; set; }
 
-        [ForeignKey("Location")]
-        [Column("location_id")]
-        public int? LocationId { get; set; }
-
-        public Location? Location { get; set; }
-
-        // Navigation properties
-        
-        public ICollection<Review> Reviews { get; set; }
-        public ICollection<BookingDetail> BookingDetails { get; set; }
-    }
+    [Column("location_id")]
+    public int? LocationId { get; set; }
 }

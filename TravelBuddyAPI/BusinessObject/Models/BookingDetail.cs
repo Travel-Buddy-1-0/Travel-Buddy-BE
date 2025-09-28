@@ -1,34 +1,24 @@
-﻿using Supabase.Postgrest.Models;
+﻿using Supabase.Postgrest.Attributes;
+using Supabase.Postgrest.Models;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BusinessObject.Models
 {
-    [Table("BookingDetails")]
+    [Table("bookingdetails")]
     public class BookingDetail : BaseModel
     {
-        [Key]
-        [Column("booking_id")]
+        [PrimaryKey("booking_id", false)]
         public int BookingId { get; set; }
 
-        [ForeignKey("User")]
         [Column("user_id")]
         public int UserId { get; set; }
 
-        [ForeignKey("Tour")]
         [Column("tour_id")]
         public int? TourId { get; set; }
 
-        [ForeignKey("Hotel")]
         [Column("hotel_id")]
         public int? HotelId { get; set; }
 
-        [ForeignKey("Restaurant")]
         [Column("restaurant_id")]
         public int? RestaurantId { get; set; }
 
@@ -36,21 +26,15 @@ namespace BusinessObject.Models
         public DateTime BookingDate { get; set; } = DateTime.UtcNow;
 
         [Column("check_in_date")]
-        public DateTime? CheckInDate { get; set; }
+        public DateOnly? CheckInDate { get; set; }
 
         [Column("check_out_date")]
-        public DateTime? CheckOutDate { get; set; }
+        public DateOnly? CheckOutDate { get; set; }
 
-        [Column("total_price", TypeName = "decimal(10,2)")]
+        [Column("total_price")]
         public decimal? TotalPrice { get; set; }
 
         [Column("approved")]
         public bool Approved { get; set; } = false;
-
-        // Navigation properties
-        public User User { get; set; }
-        public Tour Tour { get; set; }
-        public Hotel Hotel { get; set; }
-        public Restaurant Restaurant { get; set; }
     }
 }
