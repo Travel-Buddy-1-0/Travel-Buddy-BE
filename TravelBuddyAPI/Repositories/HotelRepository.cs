@@ -31,10 +31,19 @@ namespace Repositories
         public async Task<List<Hotel>> GetSuggestedHotelsAsync(int count = 4)
         {
             // Get all hotels
-            var response = await _supabase.From<Hotel>().Get();
-            return response.Models
-                .Take(count)
-                .ToList();
+            try
+            {
+                var response = await _supabase.From<Hotel>().Get();
+                return response.Models
+                    .Take(count)
+                    .ToList();
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return new List<Hotel>();
+            }
+            
         }
 
         public async Task<List<Hotel>> GetTopHotelsAsync(int count = 4)
