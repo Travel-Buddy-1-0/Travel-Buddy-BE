@@ -19,31 +19,29 @@ namespace TravelBuddyAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUserProfile([FromBody] AuthRequestDto request, [FromBody] UserProfileUpdateDto updateDto)
+        public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateUserProfileRequest request)
         {
             try
             {
-                await _client.Auth.SetSession(request.AccessToken, request.RefreshToken);
+                await _client.Auth.SetSession(request.Auth.AccessToken, request.Auth.RefreshToken);
 
-                // Cập nhật mật khẩu
-                var user = await _client.Auth.GetUser(request.AccessToken);
+                var user = await _client.Auth.GetUser(request.Auth.AccessToken);
                 if (user == null)
-                {
                     return Unauthorized("Invalid access token.");
-                }
-                var updatedUser = await _userService.UpdateUserProfileAsync(user.Email, updateDto);
+
+                var updatedUser = await _userService.UpdateUserProfileAsync(user.Email, request.Profile);
                 return Ok(updatedUser);
             }
             catch (NotFoundException ex)
             {
                 return NotFound(ex.Message);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Catch other unexpected errors
                 return StatusCode(500, "An error occurred while updating the user profile.");
             }
         }
+
 
     }
 }

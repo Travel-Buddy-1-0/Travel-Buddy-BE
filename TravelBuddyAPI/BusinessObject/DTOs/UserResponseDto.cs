@@ -7,4 +7,9 @@
         public string? TokenType { get; set; }
         public long ExpiresIn { get; set; }
     }
+    public class UpdateUserProfileRequest
+    {
+        public AuthRequestDto Auth { get; set; }
+        public UserProfileUpdateDto Profile { get; set; }
+    }
 }
