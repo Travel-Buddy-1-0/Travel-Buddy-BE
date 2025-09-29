@@ -7,6 +7,6 @@ namespace TravelBuddyAPI
     [ApiController]
     public class BlogController : ControllerBase
     {
-
+        //helllooooo
     }
 }
