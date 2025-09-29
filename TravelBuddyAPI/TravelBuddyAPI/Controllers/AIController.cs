@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Mscc.GenerativeAI;
+//using Mscc.GenerativeAI;
 namespace TravelBuddyAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -21,14 +21,14 @@ namespace TravelBuddyAPI.Controllers
                     .AddJsonFile("appsettings.json", true, true).Build();
             return configuration["Gemini:Url"] + GetKey();
         }
-        [HttpPost("generate-text")]
-        public async Task<IActionResult> GetAIBaseResult(string searchText)
-        {
-            var googleAI = new GoogleAI();  // or pass in apiKey parameter
-            var model = googleAI.GenerativeModel(model: Model.Gemini25Flash);
+        //[HttpPost("generate-text")]
+        //public async Task<IActionResult> GetAIBaseResult(string searchText)
+        //{
+        //    var googleAI = new GoogleAI();  // or pass in apiKey parameter
+        //    var model = googleAI.GenerativeModel(model: Model.Gemini25Flash);
 
-            var response = await model.GenerateContent(searchText);
-            return Ok(response);
-        }
+        //    var response = await model.GenerateContent(searchText);
+        //    return Ok(response);
+        //}
     }
 }
