@@ -78,6 +78,22 @@ public class HotelService : IHotelService
         return created.BookingId;
     }
 
+    public async Task<List<BookingHistoryDto>> GetBookingHistoryAsync(int userId, DateOnly? bookingDate)
+    {
+        var bookings = await _hotelRepository.GetBookingHistoryAsync(userId, bookingDate);
+        return bookings.Select(b => new BookingHistoryDto
+        {
+            BookingId = b.BookingId,
+            UserId = b.UserId,
+            HotelId = b.HotelId,
+            BookingDate = b.BookingDate,
+            CheckInDate = b.CheckInDate,
+            CheckOutDate = b.CheckOutDate,
+            TotalPrice = b.TotalPrice,
+            Approved = b.Approved
+        }).ToList();
+    }
+
     private async Task<List<HotelSummaryDto>> MapToSummaryAsync(List<Hotel> hotels)
     {
         var result = new List<HotelSummaryDto>(hotels.Count);

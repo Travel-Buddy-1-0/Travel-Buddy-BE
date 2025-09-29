@@ -63,6 +63,14 @@ namespace TravelBuddyAPI.Controllers
             var bookingId = await _hotelService.BookAsync(request, userId);
             return Ok(new { bookingId });
         }
+
+        // Booking history filtered by user and optional booking date
+        [HttpGet("bookings/history")]
+        public async Task<IActionResult> GetBookingHistory([FromQuery] int userId, [FromQuery] DateOnly? bookingDate)
+        {
+            var data = await _hotelService.GetBookingHistoryAsync(userId, bookingDate);
+            return Ok(data);
+        }
     }
 }
 

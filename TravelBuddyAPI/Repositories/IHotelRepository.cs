@@ -12,6 +12,7 @@ namespace Repositories
         Task<decimal?> GetAverageRatingAsync(int hotelId);
         Task<List<Review>> GetReviewsByHotelAsync(int hotelId);
         Task<BookingDetail> CreateBookingAsync(BookingDetail detail);
+        Task<List<BookingDetail>> GetBookingHistoryAsync(int userId, DateOnly? bookingDate);
     }
 }
 

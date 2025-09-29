@@ -92,6 +92,17 @@ namespace Repositories
             var inserted = await _supabase.From<BookingDetail>().Insert(detail);
             return inserted.Models.First();
         }
+
+        public async Task<List<BookingDetail>> GetBookingHistoryAsync(int userId, DateOnly? bookingDate)
+        {
+            var query = _supabase.From<BookingDetail>().Filter("user_id", Operator.Equals, userId);
+            if (bookingDate.HasValue)
+            {
+                query = query.Filter("booking_date", Operator.Equals, bookingDate.Value.ToString("yyyy-MM-dd"));
+            }
+            var response = await query.Get();
+            return response.Models;
+        }
     }
 }
 
