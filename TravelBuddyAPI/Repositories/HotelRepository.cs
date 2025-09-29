@@ -19,7 +19,7 @@ namespace Repositories
             return response.Models;
         }
 
-        public async Task<List<Hotel>> GetTopHotelsAsync(int limit = 4)
+        public async Task<List<Hotel>> GetTopHotelsAsync(int limit)
         {
             // Assuming top by average rating in review table
             // As Postgrest client aggregation is limited, fallback to simple order by name for now

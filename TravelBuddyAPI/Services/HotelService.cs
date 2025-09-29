@@ -1,4 +1,4 @@
-using BusinessLogic.Exceptions;
+﻿using BusinessLogic.Exceptions;
 using BusinessObject.DTOs;
 using BusinessObject.Models;
 using Repositories;
@@ -20,10 +20,13 @@ public class HotelService : IHotelService
         return await MapToSummaryAsync(hotels);
     }
 
-    public async Task<List<HotelSummaryDto>> GetTopHotelsAsync(int limit = 4)
+    public async Task<List<HotelSummaryDto>> GetTopHotelsAsync(int limit)
     {
-        var hotels = await _hotelRepository.GetTopHotelsAsync(limit);
-        return await MapToSummaryAsync(hotels);
+        var hotels = await _hotelRepository.GetTopHotelsAsync(25);
+        var result = await MapToSummaryAsync(hotels);
+        return result.Take(limit)
+        .OrderByDescending(h => h.AverageRating)
+        .ToList();
     }
 
     public async Task<List<HotelSummaryDto>> SearchAsync(HotelSearchRequestDto request, HotelFilterRequestDto? filter = null, int limit = 20, int offset = 0)
@@ -90,7 +93,7 @@ public class HotelService : IHotelService
                 AverageRating = avg
             });
         }
-        return result;
+        return  result;
     }
 }
 
