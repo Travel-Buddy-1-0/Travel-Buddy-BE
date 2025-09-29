@@ -10,4 +10,9 @@
         public DateOnly? DateOfBirth { get; set; }
         public string? Sex { get; set; }
     }
+    public class UpdateUserProfileRequest
+    {
+        public AuthRequestDto Auth { get; set; }
+        public UserProfileUpdateDto Profile { get; set; }
+    }
 }

@@ -107,7 +107,7 @@ namespace BusinessObject.DTOs
         public DateTime? ReviewDate { get; set; }
     }
 
-    public class RoomDto
+    public class RoomDto1
     {
         public int RoomId { get; set; }
         public int? HotelId { get; set; }
