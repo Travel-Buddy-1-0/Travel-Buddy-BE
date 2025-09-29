@@ -1,6 +1,7 @@
 
 using BusinessLogic.Services;
 using Repositories;
+using Services;
 
 namespace TravelBuddyAPI
 {
@@ -21,9 +22,13 @@ namespace TravelBuddyAPI
             builder.Services.AddSingleton(provider => new Supabase.Client(url, key, options));
             // Add services to the container.
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IHotelRepository, HotelRepository>();
+            builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
-            // Thêm Service
+            // Thï¿½m Service
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IHotelService, HotelService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
