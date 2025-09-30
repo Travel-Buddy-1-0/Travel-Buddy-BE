@@ -54,7 +54,7 @@ namespace TravelBuddyAPI.Controllers
             }
         }
         [HttpGet("getUser")]
-        public async Task<IActionResult> GetUser([FromQuery] string accessToken)
+        public async Task<IActionResult> GetUser([FromHeader] string accessToken)
         {
             try
             {
@@ -66,6 +66,7 @@ namespace TravelBuddyAPI.Controllers
                 var userModel = await _userService.GetUserByEmailAsync(user.Email);
                 return Ok(new UserDto
                 {
+                    UserId = userModel.UserId,
                     Email = userModel.Email,
                     FullName = userModel.FullName,
                     PhoneNumber = userModel.PhoneNumber,

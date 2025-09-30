@@ -12,6 +12,8 @@ namespace TravelBuddyAPI
     {
         public static void Main(string[] args)
         {
+            AppContext.SetSwitch("System.Net.Sockets.UseOnlyIPv4Stack", true);
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);            
             var builder = WebApplication.CreateBuilder(args);
 
             // Add Supabase for authentication only
