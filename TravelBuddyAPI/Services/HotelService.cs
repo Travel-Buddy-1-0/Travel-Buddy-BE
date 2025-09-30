@@ -133,9 +133,12 @@ public class HotelService : IHotelService
     private async Task<List<HotelSummaryDto>> MapToSummaryAsync(List<Hotel> hotels)
     {
         var result = new List<HotelSummaryDto>(hotels.Count);
+
         foreach (var h in hotels)
         {
             var avg = await _hotelRepository.GetAverageRatingAsync(h.HotelId);
+            var rooms = await _hotelRepository.GetRoomsByHotelAsync(h.HotelId); 
+
             result.Add(new HotelSummaryDto
             {
                 HotelId = h.HotelId,
@@ -143,12 +146,22 @@ public class HotelService : IHotelService
                 Address = h.Address,
                 Image = h.Image?.ToString(),
                 AverageRating = avg,
-                Style = h.Style
-
+                Style = h.Style,
+                Description = h.Description,
+                Rooms = rooms.Select(r => new HotelRoomDto
+                {
+                    RoomId = r.RoomId,
+                  
+                    PricePerNight = r.PricePerNight,
+       
+                   
+                }).ToList()
             });
         }
-        return  result;
+
+        return result;
     }
+
 }
 
 
