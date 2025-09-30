@@ -284,7 +284,6 @@ namespace TravelBuddyAPI.Controllers
             {
                 try
                 {
-                    var newUser = new BusinessObject.Entities.User
                 Debug.WriteLine("Received AccessToken: {AccessToken}", dto.AccessToken);
                 Debug.WriteLine("Received RefreshToken: {RefreshToken}", dto.RefreshToken);
 
@@ -296,7 +295,7 @@ namespace TravelBuddyAPI.Controllers
                     var userModel = await _userService.GetUserByEmailAsync(user.Email);
                     if (userModel == null)
                     {
-                        var newUser = new BusinessObject.Models.User
+                        var newUser = new BusinessObject.Entities.User
                         {
                             Email = user.Email,
                             FullName = userModel.FullName,
