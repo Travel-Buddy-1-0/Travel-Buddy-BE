@@ -1,5 +1,10 @@
-﻿using BusinessLogic.Services;
+
+using BusinessLogic.Services;
+using BusinessObject.Data;
+using Microsoft.EntityFrameworkCore;
+using BusinessLogic.Services;
 using Repositories;
+using Supabase;
 
 namespace TravelBuddyAPI
 {
@@ -9,6 +14,7 @@ namespace TravelBuddyAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Add Supabase for authentication only
             // --- Supabase config ---
             var url = builder.Configuration["Supabase:Url"];
             var key = builder.Configuration["Authentication:Key"];
@@ -17,6 +23,13 @@ namespace TravelBuddyAPI
                 AutoRefreshToken = true,
                 AutoConnectRealtime = true
             };
+            builder.Services.AddSingleton(provider => new Supabase.Client(url, key, options));
+
+            // Add Entity Framework
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("MyCnn")));
+
+            // Add services to the container.
 
             // --- Services ---
             builder.Services.AddSingleton(provider => new Supabase.Client(url, key, options));

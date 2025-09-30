@@ -22,7 +22,9 @@ namespace BusinessObject.DTOs;
     public decimal PricePerNight { get; set; }
     public int Capacity { get; set; }
     public bool? IsAvailable { get; set; }
-     public string? Image { get; set; }
+    public string? Image { get; set; }
+    public DateOnly? LstCheckoutDate { get; set; }
+
 }
 
 

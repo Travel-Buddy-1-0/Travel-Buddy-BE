@@ -1,5 +1,5 @@
 ﻿using BusinessObject.DTOs;
-using BusinessObject.Models;
+using BusinessObject.Entities;
 
 namespace BusinessLogic.Services;
 

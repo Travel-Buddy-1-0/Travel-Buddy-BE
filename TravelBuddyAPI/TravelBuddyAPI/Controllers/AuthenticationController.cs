@@ -95,7 +95,7 @@ namespace TravelBuddyAPI.Controllers
                 if (user1 == null)
                     return BadRequest(new { error = "User not found" });
 
-                var newUser = new BusinessObject.Models.User
+                var newUser = new BusinessObject.Entities.User
                 {
                     Email = user1.Email,
                     RegistrationDate = DateTime.Now
@@ -142,10 +142,14 @@ namespace TravelBuddyAPI.Controllers
                 //await _client.Auth.SetSession(request.AccessToken, request.RefreshToken);
                 return Results.Ok(userResponse);
             }
+            catch (Supabase.Gotrue.Exceptions.GotrueException ex)
+            {
+                _logger.LogError($"Supabase Auth Error: {ex.Message}");
+                return Results.BadRequest(new { error = ex.Message, code = ex.Response?.StatusCode });
+            }
             catch (Exception ex)
             {
-                _logger.LogError($"Unable to login" +
-                    $"");
+                _logger.LogError($"Unable to login: {ex.Message}");
 
                 // Return a Bad Request result with a specific problem detail
                 return Results.BadRequest(new ProblemDetails
@@ -291,7 +295,7 @@ namespace TravelBuddyAPI.Controllers
                     var userModel = await _userService.GetUserByEmailAsync(user.Email);
                     if (userModel == null)
                     {
-                        var newUser = new BusinessObject.Models.User
+                        var newUser = new BusinessObject.Entities.User
                         {
                             Email = user.Email,
                             FullName = userModel.FullName,
