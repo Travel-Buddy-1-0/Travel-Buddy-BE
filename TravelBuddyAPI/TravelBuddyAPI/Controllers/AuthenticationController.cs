@@ -276,7 +276,7 @@ namespace TravelBuddyAPI.Controllers
         }
 
             [HttpPost("google-session")]
-            public async Task<IActionResult> GoogleSession([FromBody] ConfirmRegisterRequestDto dto)
+            public async Task<IActionResult> GoogleSession([FromBody] UserResponseDto dto)
             {
                 try
                 {
