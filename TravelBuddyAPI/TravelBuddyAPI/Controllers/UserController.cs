@@ -13,12 +13,13 @@ namespace TravelBuddyAPI.Controllers
         private readonly Supabase.Client _client;
         private readonly IUserService _userService;
 
-        public UserController(IUserService userService)
+        public UserController(Supabase.Client client, IUserService userService)
         {
+            _client = client;
             _userService = userService;
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("updateInformation")]
         public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateUserProfileRequest request)
         {
             try
@@ -36,12 +37,10 @@ namespace TravelBuddyAPI.Controllers
             {
                 return NotFound(ex.Message);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(500, "An error occurred while updating the user profile.");
+                return StatusCode(500, $"An error occurred while updating the user profile: {ex.Message}");
             }
         }
-
-
     }
 }

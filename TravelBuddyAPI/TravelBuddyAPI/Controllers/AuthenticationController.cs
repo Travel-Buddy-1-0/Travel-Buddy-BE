@@ -280,7 +280,7 @@ namespace TravelBuddyAPI.Controllers
         }
 
             [HttpPost("google-session")]
-            public async Task<IActionResult> GoogleSession([FromBody] ConfirmRegisterRequestDto dto)
+            public async Task<IActionResult> GoogleSession([FromBody] UserResponseDto dto)
             {
                 try
                 {
@@ -291,7 +291,7 @@ namespace TravelBuddyAPI.Controllers
                     var user = await _client.Auth.GetUser(dto.AccessToken);
                     if (user == null)
                         return BadRequest(new { error = "User not found" });
-
+                var userM = await GetUser(dto.AccessToken);
                     var userModel = await _userService.GetUserByEmailAsync(user.Email);
                     if (userModel == null)
                     {

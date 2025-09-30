@@ -59,7 +59,6 @@ namespace Repositories
             return await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == email) ?? new User();
         }
-
         public async Task<User> UpdateUserByEmailAsync(string email, User updatedUser)
         {
             var user = await _context.Users
