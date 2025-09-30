@@ -1,4 +1,5 @@
-﻿using BusinessLogic.Services;
+﻿using BusinessLogic.Exceptions;
+using BusinessLogic.Services;
 using BusinessObject.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
@@ -289,27 +290,25 @@ namespace TravelBuddyAPI.Controllers
 
                 await _client.Auth.SetSession(dto.AccessToken, dto.RefreshToken);
                     var user = await _client.Auth.GetUser(dto.AccessToken);
+
                     if (user == null)
                         return BadRequest(new { error = "User not found" });
-                var userM = await GetUser(dto.AccessToken);
-                    var userModel = await _userService.GetUserByEmailAsync(user.Email);
-                    if (userModel == null)
-                    {
-                        var newUser = new BusinessObject.Entities.User
-                        {
-                            Email = user.Email,
-                            FullName = userModel.FullName,
-                            Photo = userModel.Photo,
-                            RegistrationDate = DateTime.Now
-                        };
-                        await _userService.CreateUserAsync(newUser);
-                    }
-
-                    return Ok(new
+                BusinessObject.Entities.User? userModel = null;
+                try
+                {
+                    userModel = await _userService.GetUserByEmailAsync(user.Email);
+                }
+                catch (NotFoundException)
+                {
+                    var newUser = new BusinessObject.Entities.User
                     {
                         Email = user.Email,
-                        Name = userModel.FullName,
-                        Avatar = userModel.Photo
+                    };
+                    await _userService.CreateUserAsync(newUser);
+                }
+                    return Ok(new
+                    {
+                        Email = user.Email
                     });
                 }
                 catch (Exception ex)
