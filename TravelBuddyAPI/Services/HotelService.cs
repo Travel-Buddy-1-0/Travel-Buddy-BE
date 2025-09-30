@@ -34,13 +34,13 @@ public class HotelService : IHotelService
         if (string.IsNullOrWhiteSpace(name))
             return name;
 
-        name = name.Trim();
+        name = name.Trim().ToLower();
 
-        if (name.StartsWith("Tỉnh "))
-            return name.Substring("Tỉnh ".Length).Trim();
+        if (name.StartsWith("tỉnh "))
+            return name.Substring("tỉnh ".Length).Trim();
 
-        if (name.StartsWith("Thành phố "))
-            return name.Substring("Thành phố ".Length).Trim();
+        if (name.StartsWith("thành phố "))
+            return name.Substring("thành phố ".Length).Trim();
 
         return name;
     }
@@ -89,7 +89,10 @@ public class HotelService : IHotelService
             HotelId = request.HotelId,
             CheckInDate = request.CheckIn,
             CheckOutDate = request.CheckOut,
-            TotalPrice = null
+            TotalPrice = request.TotalPrice,
+            Status = 1,
+            RoomId = request.RoomId,
+            RestaurantId = request.RestaurantId
         };
         var created = await _hotelRepository.CreateBookingAsync(detail);
         return created.BookingId;
@@ -111,6 +114,22 @@ public class HotelService : IHotelService
         }).ToList();
     }
 
+    public async Task<List<ReviewDto1>> GetReviewsAsync(int hotelId, int? rating, int limit = 20, int offset = 0)
+    {
+        var reviews = await _hotelRepository.GetReviewsByHotelAsync(hotelId, rating, limit, offset);
+        return reviews.Select(r => new ReviewDto1
+        {
+            ReviewId = r.ReviewId,
+            UserId = r.UserId,
+            ReviewerName = r.User?.FullName ?? r.User?.Username,
+            HotelId = r.HotelId,
+            Rating = r.Rating,
+            Comment = r.Comment,
+            Image = r.Image,
+            ReviewDate = r.ReviewDate
+        }).ToList();
+    }
+
     private async Task<List<HotelSummaryDto>> MapToSummaryAsync(List<Hotel> hotels)
     {
         var result = new List<HotelSummaryDto>(hotels.Count);
@@ -123,7 +142,9 @@ public class HotelService : IHotelService
                 Name = h.Name,
                 Address = h.Address,
                 Image = h.Image?.ToString(),
-                AverageRating = avg
+                AverageRating = avg,
+                Style = h.Style
+
             });
         }
         return  result;

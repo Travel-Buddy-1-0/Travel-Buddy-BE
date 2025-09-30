@@ -10,9 +10,12 @@ public class HotelBookingRequestDto
     public string? SpecialRequest { get; set; }
     public DateOnly CheckIn { get; set; }
     public DateOnly CheckOut { get; set; }
+    public decimal? TotalPrice { get; set; }
     public int Nights { get; set; }
     public int Guests { get; set; }
     public int HotelId { get; set; }
+    public int RoomId { get; set; }
+    public int RestaurantId { get; set; }
 }
 
 

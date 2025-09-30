@@ -6,6 +6,7 @@ public class HotelSummaryDto
     public string Name { get; set; } = null!;
     public string? Address { get; set; }
     public string? Image { get; set; }
+    public string? Style { get; set; }
     public decimal? AverageRating { get; set; }
 }
 

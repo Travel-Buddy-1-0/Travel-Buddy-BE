@@ -34,27 +34,28 @@ namespace Repositories
 
             if (!string.IsNullOrWhiteSpace(location))
             {
-                query = query.Where(h => h.Address != null && h.Address.Contains(location));
+                query = query.Where(h => h.Address != null && h.Address.ToLower().Contains(location));
             }
 
-            // Filter by style JSON properties
             if (!string.IsNullOrWhiteSpace(type))
             {
-                query = query.Where(h => h.Style != null && h.Style.Contains($"\"type\":\"{type}\""));
+                query = query.Where(h => EF.Functions.JsonContains(h.Style!, $"{{\"type\":\"{type}\"}}"));
             }
 
             if (stars.HasValue)
             {
-                query = query.Where(h => h.Style != null && h.Style.Contains($"\"stars\":{stars.Value}"));
+                query = query.Where(h => EF.Functions.JsonContains(h.Style!, $"{{\"stars\":{stars.Value}}}"));
             }
 
             if (amenities != null && amenities.Any())
             {
                 foreach (var amenity in amenities)
                 {
-                    query = query.Where(h => h.Style != null && h.Style.Contains($"\"{amenity}\""));
+                    query = query.Where(h => h.Style != null &&
+                        EF.Functions.JsonContains(h.Style!, $"{{\"amenities\": [\"{amenity}\"]}}"));
                 }
             }
+
 
             var hotels = await query
                 .Skip(offset)
@@ -105,12 +106,24 @@ namespace Repositories
             return (decimal?)ratings.Average();
         }
 
-        public async Task<List<Review>> GetReviewsByHotelAsync(int hotelId)
+        public async Task<List<Review>> GetReviewsByHotelAsync(int hotelId, int? rating = null, int limit = 20, int offset = 0)
         {
-            return await _context.Reviews
-                .Where(r => r.HotelId == hotelId)
+            var query = _context.Reviews
+                .Include(r => r.User)
+                .Where(r => r.HotelId == hotelId);
+
+            if (rating.HasValue)
+            {
+                query = query.Where(r => r.Rating == rating.Value);
+            }
+
+            return await query
+                .OrderByDescending(r => r.ReviewDate)
+                .Skip(offset)
+                .Take(limit)
                 .ToListAsync();
         }
+
 
         public async Task<Bookingdetail> CreateBookingAsync(Bookingdetail detail)
         {

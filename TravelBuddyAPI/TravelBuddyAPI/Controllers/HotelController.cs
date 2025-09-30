@@ -62,6 +62,14 @@ namespace TravelBuddyAPI.Controllers
             var data = await _hotelService.GetBookingHistoryAsync(userId, bookingDate);
             return Ok(data);
         }
+
+        // -1 api reviews by hotel with optional rating filter
+        [HttpGet("reviews")]
+        public async Task<IActionResult> GetReviews([FromQuery] int hotelId, [FromQuery] int? rating, [FromQuery] int limit = 20, [FromQuery] int offset = 0)
+        {
+            var data = await _hotelService.GetReviewsAsync(hotelId, rating, limit, offset);
+            return Ok(data);
+        }
     }
 }
 
