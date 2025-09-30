@@ -503,7 +503,7 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("useractivity_user_id_fkey");
-        });
+        });     
 
         modelBuilder.Entity<Userpreference>(entity =>
         {
