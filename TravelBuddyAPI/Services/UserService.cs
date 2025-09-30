@@ -100,26 +100,30 @@ public class UserService : IUserService
         return user;
     }
 
-    public async Task<UserDto> UpdateUserProfileAsync(string email,UserProfileUpdateDto updatedProfile)
+    public async Task<UserDto> UpdateUserProfileAsync(string currentEmail, UserProfileUpdateDto updatedProfile)
     {
-        
-        var userToUpdate = await _userRepository.GetUserByEmailAsync(email);
+        // Lấy user từ email cũ (token)
+        var userToUpdate = await _userRepository.GetUserByEmailAsync(currentEmail);
         if (userToUpdate == null)
-        {
-            throw new NotFoundException($"User with Email {updatedProfile.Email} not found.");
-        }
+            throw new NotFoundException($"User with Email {currentEmail} not found.");
 
-
+        // Cập nhật các field
         userToUpdate.Username = updatedProfile.Username ?? userToUpdate.Username;
-        userToUpdate.Email = updatedProfile.Email ?? userToUpdate.Email;
         userToUpdate.FullName = updatedProfile.FullName ?? userToUpdate.FullName;
         userToUpdate.PhoneNumber = updatedProfile.PhoneNumber ?? userToUpdate.PhoneNumber;
         userToUpdate.DateOfBirth = updatedProfile.DateOfBirth ?? userToUpdate.DateOfBirth;
         userToUpdate.Sex = updatedProfile.Sex ?? userToUpdate.Sex;
         userToUpdate.Photo = updatedProfile.Image ?? userToUpdate.Photo;
 
-        // Use a dedicated method in the repository for updates
-        var updatedUser = await _userRepository.UpdateUserByEmailAsync(updatedProfile.Email, userToUpdate);
+        // Email mới (nếu có)
+        var newEmail = updatedProfile.Email ?? userToUpdate.Email;
+
+        // Update user bằng email cũ
+        var updatedUser = await _userRepository.UpdateUserByEmailAsync(currentEmail, userToUpdate);
+
+        // Set email mới cho object trả về (Supabase không thay đổi filter)
+        updatedUser.Email = newEmail;
+
         return new UserDto
         {
             Email = updatedUser.Email,
@@ -130,4 +134,5 @@ public class UserService : IUserService
             Photo = updatedUser.Photo
         };
     }
+
 }

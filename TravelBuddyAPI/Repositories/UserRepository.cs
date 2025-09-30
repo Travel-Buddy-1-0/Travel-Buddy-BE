@@ -65,15 +65,17 @@ namespace Repositories
                 .Single();
             return response;
         }
-        public async Task<User> UpdateUserByEmailAsync(string email, User updatedUser)
+        public async Task<User> UpdateUserByEmailAsync(string oldEmail, User updatedUser)
         {
+            // Filter bằng email cũ để tránh update nhầm
             var response = await _supabase
                 .From<User>()
-                .Filter("email", Operator.Equals, email)
+                .Filter("email", Operator.Equals, oldEmail)
                 .Update(updatedUser);
 
-            return response.Models.First();
+            return response.Models.First(); // Trả về user đã update
         }
+
 
     }
 }
