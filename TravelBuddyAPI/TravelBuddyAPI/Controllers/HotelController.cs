@@ -31,20 +31,11 @@ namespace TravelBuddyAPI.Controllers
             return Ok(data);
         }
 
-        // -1 api cho search hotel với location+checkin+checkout+ Guest 
+        // -1 api cho search hotel với location+checkin+checkout+ Guest + filters
         [HttpPost("search")]
         public async Task<IActionResult> Search([FromBody] HotelSearchRequestDto request, [FromQuery] int limit = 20, [FromQuery] int offset = 0)
         {
-            var data = await _hotelService.SearchAsync(request, null, limit, offset);
-            return Ok(data);
-        }
-
-        // -api chuyên dung cho filter theo star, kiểu , giá tiên,
-        [HttpPost("filter")]
-        public async Task<IActionResult> Filter([FromQuery] int limit, [FromQuery] int offset, [FromBody] HotelFilterRequestDto filter, [FromQuery] string? location, [FromQuery] int? guests)
-        {
-            var search = new HotelSearchRequestDto { Location = location, Guests = guests };
-            var data = await _hotelService.SearchAsync(search, filter, limit, offset);
+            var data = await _hotelService.SearchAsync(request, limit, offset);
             return Ok(data);
         }
 

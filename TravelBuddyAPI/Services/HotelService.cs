@@ -1,6 +1,6 @@
 ﻿using BusinessLogic.Exceptions;
 using BusinessObject.DTOs;
-using BusinessObject.Models;
+using BusinessObject.Entities;
 using Repositories;
 
 namespace BusinessLogic.Services;
@@ -24,14 +24,30 @@ public class HotelService : IHotelService
     {
         var hotels = await _hotelRepository.GetTopHotelsAsync(25);
         var result = await MapToSummaryAsync(hotels);
-        return result.Take(limit)
-        .OrderByDescending(h => h.AverageRating)
+        result = result.OrderByDescending(h => h.AverageRating)
         .ToList();
+        return result.Take(limit).ToList();
+        ;
+    }
+    public static string CleanProvinceName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return name;
+
+        name = name.Trim();
+
+        if (name.StartsWith("Tỉnh "))
+            return name.Substring("Tỉnh ".Length).Trim();
+
+        if (name.StartsWith("Thành phố "))
+            return name.Substring("Thành phố ".Length).Trim();
+
+        return name;
     }
 
-    public async Task<List<HotelSummaryDto>> SearchAsync(HotelSearchRequestDto request, HotelFilterRequestDto? filter = null, int limit = 20, int offset = 0)
+    public async Task<List<HotelSummaryDto>> SearchAsync(HotelSearchRequestDto request, int limit = 20, int offset = 0)
     {
-        var hotels = await _hotelRepository.SearchHotelsAsync(request.Location, request.Guests, filter?.MinPrice, filter?.MaxPrice, filter?.Type, limit, offset);
+        var hotels = await _hotelRepository.SearchHotelsAsync(CleanProvinceName(request.Location), request.Guests,null, null, request?.Type, request?.Stars, request?.Amenities, limit, offset);
         return await MapToSummaryAsync(hotels);
     }
 
@@ -57,7 +73,8 @@ public class HotelService : IHotelService
                 PricePerNight = r.PricePerNight,
                 Capacity = r.Capacity,
                 IsAvailable = r.IsAvailable,
-                Image = r.Image?.ToString()
+                Image = r.Image?.ToString(),
+                LstCheckoutDate = r.Bookingdetails.OrderByDescending(x => x.CheckOutDate).FirstOrDefault()?.CheckOutDate
             }).ToList()
         };
     }
@@ -66,7 +83,7 @@ public class HotelService : IHotelService
     {
         var hotel = await _hotelRepository.GetByIdAsync(request.HotelId) ?? throw new NotFoundException($"Hotel {request.HotelId} not found");
 
-        var detail = new BookingDetail
+        var detail = new Bookingdetail
         {
             UserId = userId,
             HotelId = request.HotelId,
@@ -84,13 +101,13 @@ public class HotelService : IHotelService
         return bookings.Select(b => new BookingHistoryDto
         {
             BookingId = b.BookingId,
-            UserId = b.UserId,
+            UserId = b.UserId ?? 0,
             HotelId = b.HotelId,
-            BookingDate = b.BookingDate,
+            BookingDate = b.BookingDate ?? DateTime.UtcNow,
             CheckInDate = b.CheckInDate,
             CheckOutDate = b.CheckOutDate,
             TotalPrice = b.TotalPrice,
-            Approved = b.Approved
+            Approved = b.Approved ?? false
         }).ToList();
     }
 

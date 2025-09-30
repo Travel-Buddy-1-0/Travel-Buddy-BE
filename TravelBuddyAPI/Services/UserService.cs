@@ -1,6 +1,6 @@
 ﻿using BusinessLogic.Exceptions;
 using BusinessObject.DTOs;
-using BusinessObject.Models;
+using BusinessObject.Entities;
 using Repositories;
 using System.Security.Authentication;
 using System.Text.Json.Nodes;

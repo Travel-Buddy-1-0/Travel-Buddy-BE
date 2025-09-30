@@ -1,56 +1,77 @@
-using BusinessObject.Models;
-using Supabase.Postgrest;
-using static Supabase.Postgrest.Constants;
+using BusinessObject.Data;
+using BusinessObject.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Repositories
 {
     public class HotelRepository : IHotelRepository
     {
-        private readonly Supabase.Client _supabase;
+        private readonly AppDbContext _context;
 
-        public HotelRepository(Supabase.Client supabaseClient)
+        public HotelRepository(AppDbContext context)
         {
-            _supabase = supabaseClient;
+            _context = context;
         }
 
         public async Task<List<Hotel>> GetSuggestionsAsync(int limit = 4)
         {
-            var response = await _supabase.From<Hotel>().Limit(limit).Get();
-            return response.Models;
+            return await _context.Hotels
+                .Take(limit)
+                .ToListAsync();
         }
 
-        public async Task<List<Hotel>> GetTopHotelsAsync(int limit)
+        public async Task<List<Hotel>> GetTopHotelsAsync(int limit = 4)
         {
-            // Assuming top by average rating in review table
-            // As Postgrest client aggregation is limited, fallback to simple order by name for now
-            var response = await _supabase.From<Hotel>().Limit(limit).Get();
-            return response.Models;
+            return await _context.Hotels
+                .OrderByDescending(h => h.Reviews.Average(r => r.Rating))
+                .Take(limit)
+                .ToListAsync();
         }
 
-        public async Task<List<Hotel>> SearchHotelsAsync(string? location, int? guests, decimal? minPrice, decimal? maxPrice, string? type, int limit = 20, int offset = 0)
+        public async Task<List<Hotel>> SearchHotelsAsync(string? location, int? guests, decimal? minPrice, decimal? maxPrice, string? type, int? stars, List<string>? amenities, int limit = 20, int offset = 0)
         {
-            var query = _supabase.From<Hotel>() as Table<Hotel>;
+            var query = _context.Hotels.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(location))
             {
-                query = (Table<Hotel>?)query.Filter("address", Operator.ILike, $"%{location}%");
+                query = query.Where(h => h.Address != null && h.Address.Contains(location));
             }
+
+            // Filter by style JSON properties
             if (!string.IsNullOrWhiteSpace(type))
             {
-                query = (Table<Hotel>?)query.Filter("style", Operator.ILike, $"%{type}%");
+                query = query.Where(h => h.Style != null && h.Style.Contains($"\"type\":\"{type}\""));
             }
 
-            var response = await query.Range(offset, offset + limit - 1).Get();
-            var hotels = response.Models;
+            if (stars.HasValue)
+            {
+                query = query.Where(h => h.Style != null && h.Style.Contains($"\"stars\":{stars.Value}"));
+            }
 
-            // Basic price filter by checking min room price per hotel if rooms available
+            if (amenities != null && amenities.Any())
+            {
+                foreach (var amenity in amenities)
+                {
+                    query = query.Where(h => h.Style != null && h.Style.Contains($"\"{amenity}\""));
+                }
+            }
+
+            var hotels = await query
+                .Skip(offset)
+                .Take(limit)
+                .ToListAsync();
+
+            // Filter by room price and capacity if specified
             if (minPrice.HasValue || maxPrice.HasValue || guests.HasValue)
             {
                 var filtered = new List<Hotel>();
                 foreach (var h in hotels)
                 {
                     var rooms = await GetRoomsByHotelAsync(h.HotelId);
-                    var candidateRooms = rooms.Where(r => (!minPrice.HasValue || r.PricePerNight >= minPrice) && (!maxPrice.HasValue || r.PricePerNight <= maxPrice) && (!guests.HasValue || r.Capacity >= guests));
+                    var candidateRooms = rooms.Where(r => 
+                        (!minPrice.HasValue || r.PricePerNight >= minPrice) && 
+                        (!maxPrice.HasValue || r.PricePerNight <= maxPrice) && 
+                        (!guests.HasValue || r.Capacity >= guests));
                     if (candidateRooms.Any())
                         filtered.Add(h);
                 }
@@ -62,48 +83,55 @@ namespace Repositories
 
         public async Task<Hotel?> GetByIdAsync(int hotelId)
         {
-            var response = await _supabase.From<Hotel>().Filter("hotel_id", Operator.Equals, hotelId).Single();
-            return response;
+            return await _context.Hotels
+                .FirstOrDefaultAsync(h => h.HotelId == hotelId);
         }
 
         public async Task<List<Room>> GetRoomsByHotelAsync(int hotelId)
         {
-            var response = await _supabase.From<Room>().Filter("hotel_id", Operator.Equals, hotelId).Get();
-            return response.Models;
+            return await _context.Rooms.Include(x => x.Bookingdetails)
+                .Where(r => r.HotelId == hotelId)
+                .ToListAsync();
         }
 
         public async Task<decimal?> GetAverageRatingAsync(int hotelId)
         {
-            // Postgrest .NET client lacks direct AVG; fetch and compute client-side
-            var response = await _supabase.From<Review>().Filter("hotel_id", Operator.Equals, hotelId).Get();
-            var ratings = response.Models.Where(r => r.Rating.HasValue).Select(r => (decimal)r.Rating!.Value);
+            var ratings = await _context.Reviews
+                .Where(r => r.HotelId == hotelId && r.Rating.HasValue)
+                .Select(r => r.Rating!.Value)
+                .ToListAsync();
+
             if (!ratings.Any()) return null;
-            return ratings.Average();
+            return (decimal?)ratings.Average();
         }
 
         public async Task<List<Review>> GetReviewsByHotelAsync(int hotelId)
         {
-            var response = await _supabase.From<Review>().Filter("hotel_id", Operator.Equals, hotelId).Get();
-            return response.Models;
+            return await _context.Reviews
+                .Where(r => r.HotelId == hotelId)
+                .ToListAsync();
         }
 
-        public async Task<BookingDetail> CreateBookingAsync(BookingDetail detail)
+        public async Task<Bookingdetail> CreateBookingAsync(Bookingdetail detail)
         {
-            var inserted = await _supabase.From<BookingDetail>().Insert(detail);
-            return inserted.Models.First();
+            _context.Bookingdetails.Add(detail);
+            await _context.SaveChangesAsync();
+            return detail;
         }
 
-        public async Task<List<BookingDetail>> GetBookingHistoryAsync(int userId, DateOnly? bookingDate)
+        public async Task<List<Bookingdetail>> GetBookingHistoryAsync(int userId, DateOnly? bookingDate)
         {
-            var query = _supabase.From<BookingDetail>().Filter("user_id", Operator.Equals, userId);
+            var query = _context.Bookingdetails
+                .Where(b => b.UserId == userId);
+
             if (bookingDate.HasValue)
             {
-                query = query.Filter("booking_date", Operator.Equals, bookingDate.Value.ToString("yyyy-MM-dd"));
+                var date = bookingDate.Value.ToDateTime(TimeOnly.MinValue);
+                query = query.Where(b => b.BookingDate.HasValue && 
+                    b.BookingDate.Value.Date == date.Date);
             }
-            var response = await query.Get();
-            return response.Models;
+
+            return await query.ToListAsync();
         }
     }
 }
-
-

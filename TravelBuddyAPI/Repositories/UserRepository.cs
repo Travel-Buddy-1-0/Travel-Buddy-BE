@@ -1,79 +1,85 @@
-﻿using BusinessObject.Models;
-using Supabase.Postgrest;
-using static Supabase.Postgrest.Constants;
+﻿using BusinessObject.Data;
+using BusinessObject.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private readonly Supabase.Client _supabase;
+        private readonly AppDbContext _context;
 
-        public UserRepository(Supabase.Client supabaseClient)
+        public UserRepository(AppDbContext context)
         {
-            _supabase = supabaseClient;
+            _context = context;
         }
 
         public async Task<List<User>> GetAllUsersAsync()
         {
-            var response = await _supabase.From<User>().Get();
-            return response.Models;
+            return await _context.Users.ToListAsync();
         }
 
         public async Task<User?> GetUserByIdAsync(int userId)
         {
-            var response = await _supabase
-                .From<User>()
-                .Filter("user_id", Operator.Equals, userId)
-                .Single();
-            return response;
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.UserId == userId);
         }
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            var response = await _supabase
-                .From<User>()
-                .Filter("email", Operator.Equals, email)
-                .Single();
-            return response;
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<User> AddUserAsync(User user)
         {
-            var response = await _supabase.From<User>().Insert(user);
-            return response.Models.First();
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return user;
         }
 
         public async Task<User> UpdateUserAsync(User user)
         {
-            // Supabase cần PrimaryKey để biết đối tượng nào cần cập nhật
-            var response = await _supabase.From<User>().Update(user);
-            return response.Models.First();
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return user;
         }
 
         public async Task DeleteUserAsync(int userId)
         {
-            await _supabase
-                .From<User>()
-                .Filter("user_id", Operator.Equals, userId)
-                .Delete();
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null)
+            {
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+            }
         }
+
         public async Task<User> GetUserByEmail(string email)
         {
-            var response = await _supabase
-                .From<User>()
-                .Filter("email", Operator.Equals, email)
-                .Single();
-            return response;
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email) ?? new User();
         }
+
         public async Task<User> UpdateUserByEmailAsync(string email, User updatedUser)
         {
-            var response = await _supabase
-                .From<User>()
-                .Filter("email", Operator.Equals, email)
-                .Update(updatedUser);
-
-            return response.Models.First();
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
+            
+            if (user != null)
+            {
+                user.Username = updatedUser.Username;
+                user.Email = updatedUser.Email;
+                user.FullName = updatedUser.FullName;
+                user.PhoneNumber = updatedUser.PhoneNumber;
+                user.DateOfBirth = updatedUser.DateOfBirth;
+                user.Photo = updatedUser.Photo;
+                user.Role = updatedUser.Role;
+                user.Sex = updatedUser.Sex;
+                
+                await _context.SaveChangesAsync();
+            }
+            
+            return user ?? new User();
         }
-
     }
 }
