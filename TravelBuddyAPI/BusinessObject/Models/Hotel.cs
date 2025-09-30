@@ -1,6 +1,6 @@
 ﻿using Supabase.Postgrest.Models;
 using Supabase.Postgrest.Attributes;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 
 namespace BusinessObject.Models;
 
@@ -20,8 +20,8 @@ public class Hotel : BaseModel
     public string? Address { get; set; }
 
     [Column("image")]
-    public JsonObject? Image { get; set; }
+    public JToken? Image { get; set; }
 
     [Column("style")]
-    public JsonObject? Style { get; set; }
+    public JToken? Style { get; set; }
 }

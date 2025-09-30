@@ -21,7 +21,7 @@ namespace TravelBuddyAPI.Controllers
             _userService = userService;
         }
         [HttpPost("register")]
-        public async Task<IResult> Register(RegisterRequestDto request)
+        public async Task<IResult> Register([FromBody] RegisterRequestDto request)
         {
             try
             {

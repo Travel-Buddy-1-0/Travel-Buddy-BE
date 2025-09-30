@@ -21,7 +21,12 @@ namespace TravelBuddyAPI
             // --- Services ---
             builder.Services.AddSingleton(provider => new Supabase.Client(url, key, options));
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+            builder.Services.AddScoped<IHotelRepository, HotelRepository>();
+
+
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IHotelService, HotelService>();
             builder.Services.AddControllers();
 
             // --- CORS ---
@@ -77,6 +82,7 @@ namespace TravelBuddyAPI
             app.MapControllers();
 
             app.Run();
+
         }
     }
 }
