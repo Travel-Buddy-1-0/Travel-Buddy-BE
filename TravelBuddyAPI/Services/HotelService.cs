@@ -137,7 +137,8 @@ public class HotelService : IHotelService
             Email = b.Email,
             Phone = b.Phone,
             Note = b.Note,
-            Country = b.Country
+            Country = b.Country,
+            Status = b.Status
 
         }).ToList();
     }

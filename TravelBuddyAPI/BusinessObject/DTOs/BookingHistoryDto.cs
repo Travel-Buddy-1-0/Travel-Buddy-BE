@@ -18,6 +18,8 @@ public class BookingHistoryDto
     public string? Country { get; set; }
     public string? Phone { get; set; }
     public string? Note { get; set; }
+    public int? Status { get; set; }
+
 }
 
 
