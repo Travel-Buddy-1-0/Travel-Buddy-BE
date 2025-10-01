@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using BusinessLogic.Services;
 using Repositories;
 using Supabase;
+using Services;
 
 namespace TravelBuddyAPI
 {
@@ -38,10 +39,11 @@ namespace TravelBuddyAPI
             builder.Services.AddScoped<IUserRepository, UserRepository>();
 
             builder.Services.AddScoped<IHotelRepository, HotelRepository>();
-
+            builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IHotelService, HotelService>();
+            builder.Services.AddScoped<IRoomService, RoomService>();
             builder.Services.AddControllers();
 
             // --- CORS ---
