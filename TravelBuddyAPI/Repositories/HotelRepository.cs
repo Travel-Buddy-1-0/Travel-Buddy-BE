@@ -69,9 +69,9 @@ namespace Repositories
                 foreach (var h in hotels)
                 {
                     var rooms = await GetRoomsByHotelAsync(h.HotelId);
-                    var candidateRooms = rooms.Where(r => 
-                        (!minPrice.HasValue || r.PricePerNight >= minPrice) && 
-                        (!maxPrice.HasValue || r.PricePerNight <= maxPrice) && 
+                    var candidateRooms = rooms.Where(r =>
+                        (!minPrice.HasValue || r.PricePerNight >= minPrice) &&
+                        (!maxPrice.HasValue || r.PricePerNight <= maxPrice) &&
                         (!guests.HasValue || r.Capacity >= guests));
                     if (candidateRooms.Any())
                         filtered.Add(h);
@@ -140,7 +140,7 @@ namespace Repositories
             if (bookingDate.HasValue)
             {
                 var date = bookingDate.Value.ToDateTime(TimeOnly.MinValue);
-                query = query.Where(b => b.BookingDate.HasValue && 
+                query = query.Where(b => b.BookingDate.HasValue &&
                     b.BookingDate.Value.Date == date.Date);
             }
 
@@ -149,12 +149,20 @@ namespace Repositories
 
         public async Task<int> ChangeStatusBookingAsync(int bookingId, int status)
         {
-            var query = _context.Bookingdetails.FirstOrDefault(b => b.BookingId == bookingId);  
+            var query = _context.Bookingdetails.FirstOrDefault(b => b.BookingId == bookingId);
             if (query == null)
             {
                 return 0;
             }
+            var user = _context.Users.FirstOrDefault(x => x.UserId == query.UserId);
+
+            if (query.Status == 1 && status == 3)
+            {
+                user.WalletBalance = user.WalletBalance + query.TotalPrice;
+            }
             query.Status = status;
+
+            _context.Users.Update(user);
             _context.Bookingdetails.Update(query);
             _context.SaveChanges();
             return 1;
