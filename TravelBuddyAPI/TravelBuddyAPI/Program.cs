@@ -40,10 +40,12 @@ namespace TravelBuddyAPI
 
             builder.Services.AddScoped<IHotelRepository, HotelRepository>();
             builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+            builder.Services.AddScoped<ICommentBlogRepository, CommentBlogRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IHotelService, HotelService>();
             builder.Services.AddScoped<IRoomService, RoomService>();
+            builder.Services.AddScoped<ICommentBlogService, CommentBlogService>();
             builder.Services.AddControllers();
 
             // --- CORS ---

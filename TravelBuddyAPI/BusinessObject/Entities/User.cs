@@ -26,6 +26,7 @@ public partial class User
     public string? Role { get; set; }
 
     public string? Sex { get; set; }
+    public decimal? WalletBalance { get; set; }
 
     public virtual ICollection<Blog> Blogs { get; set; } = new List<Blog>();
 
@@ -42,4 +43,7 @@ public partial class User
     public virtual ICollection<Useractivity> Useractivities { get; set; } = new List<Useractivity>();
 
     public virtual ICollection<Userpreference> Userpreferences { get; set; } = new List<Userpreference>();
+
+    public virtual ICollection<CommentBlog> CommentBlogs { get; set; } = new List<CommentBlog>();
+
 }

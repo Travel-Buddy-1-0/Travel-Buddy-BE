@@ -43,6 +43,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Tour> Tours { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<CommentBlog> CommentBlogs { get; set; }
 
     public virtual DbSet<Useractivity> Useractivities { get; set; }
 
@@ -54,6 +55,43 @@ public partial class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<CommentBlog>(entity =>
+        {
+            entity.HasKey(e => e.CommentId).HasName("comment_blog_pkey");
+
+            entity.ToTable("comment_blog");
+
+            entity.Property(e => e.CommentId).HasColumnName("comment_id");
+            entity.Property(e => e.BlogId).HasColumnName("blog_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Content).HasColumnName("content");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+            entity.Property(e => e.ParentCommentId).HasColumnName("parent_comment_id");
+
+            // Quan hệ với Blog
+            entity.HasOne(d => d.Blog).WithMany(p => p.Comments)
+                .HasForeignKey(d => d.BlogId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("comment_blog_blog_id_fkey");
+
+            // Quan hệ với User
+            entity.HasOne(d => d.User).WithMany(p => p.CommentBlogs)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("comment_blog_user_id_fkey");
+
+            // Self-referencing (reply comment)
+            entity.HasOne(d => d.ParentComment).WithMany(p => p.Replies)
+                .HasForeignKey(d => d.ParentCommentId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("comment_blog_parent_comment_id_fkey");
+        });
         modelBuilder
             .HasPostgresEnum("auth", "aal_level", new[] { "aal1", "aal2", "aal3" })
             .HasPostgresEnum("auth", "code_challenge_method", new[] { "s256", "plain" })
@@ -160,6 +198,28 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("bookingdetails_user_id_fkey");
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .HasColumnName("first_name");
+
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100)
+                .HasColumnName("last_name");
+
+            entity.Property(e => e.Email)
+                .HasMaxLength(150)
+                .HasColumnName("email");
+
+            entity.Property(e => e.Country)
+                .HasMaxLength(100)
+                .HasColumnName("country");
+
+            entity.Property(e => e.Phone)
+                .HasMaxLength(20)
+                .HasColumnName("phone");
+
+            entity.Property(e => e.Note)
+                .HasColumnName("note");
         });
 
         modelBuilder.Entity<Conversation>(entity =>
@@ -478,6 +538,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Username)
                 .HasMaxLength(50)
                 .HasColumnName("username");
+            entity.Property(e => e.WalletBalance).HasPrecision(10, 2).HasColumnName("wallet_balance");
         });
 
         modelBuilder.Entity<Useractivity>(entity =>
@@ -503,7 +564,7 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("useractivity_user_id_fkey");
-        });     
+        });
 
         modelBuilder.Entity<Userpreference>(entity =>
         {

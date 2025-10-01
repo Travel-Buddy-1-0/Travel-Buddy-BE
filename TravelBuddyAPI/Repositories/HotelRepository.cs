@@ -146,5 +146,19 @@ namespace Repositories
 
             return await query.ToListAsync();
         }
+
+        public async Task<int> ChangeStatusBookingAsync(int bookingId, int status)
+        {
+            var query = _context.Bookingdetails.FirstOrDefault(b => b.BookingId == bookingId);  
+            if (query == null)
+            {
+                return 0;
+            }
+            query.Status = status;
+            _context.Bookingdetails.Update(query);
+            _context.SaveChanges();
+            return 1;
+        }
+
     }
 }

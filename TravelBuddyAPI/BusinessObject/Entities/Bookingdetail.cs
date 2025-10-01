@@ -29,6 +29,13 @@ public partial class Bookingdetail
 
     public int? Status { get; set; }
 
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? Email { get; set; }
+    public string? Country { get; set; }
+    public string? Phone { get; set; }
+    public string? Note { get; set; }
+
     public virtual Hotel? Hotel { get; set; }
 
     public virtual Restaurant? Restaurant { get; set; }

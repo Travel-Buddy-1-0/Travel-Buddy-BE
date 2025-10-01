@@ -70,6 +70,22 @@ namespace TravelBuddyAPI.Controllers
             var data = await _hotelService.GetReviewsAsync(hotelId, rating, limit, offset);
             return Ok(data);
         }
+
+        [HttpGet("change-status-booking")]
+        public async Task<IActionResult> ChangeStatusBooking(int bookingId, int status)
+        {
+            var data = await _hotelService.ChangeStatusBookingAsync(bookingId, status);
+            if(data == 1)
+            {
+                return Ok("Update status booking success");
+
+            }
+            else
+            {
+                return BadRequest("Update status booking fail");
+            }
+        }
+
     }
 }
 

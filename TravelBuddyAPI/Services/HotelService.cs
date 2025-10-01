@@ -8,10 +8,12 @@ namespace BusinessLogic.Services;
 public class HotelService : IHotelService
 {
     private readonly IHotelRepository _hotelRepository;
+    private readonly IUserRepository _userRepository;
 
-    public HotelService(IHotelRepository hotelRepository)
+    public HotelService(IHotelRepository hotelRepository, IUserRepository userRepository)
     {
         _hotelRepository = hotelRepository;
+        _userRepository = userRepository;
     }
 
     public async Task<List<HotelSummaryDto>> GetSuggestionsAsync(int limit = 4)
@@ -82,7 +84,20 @@ public class HotelService : IHotelService
     public async Task<int> BookAsync(HotelBookingRequestDto request, int userId)
     {
         var hotel = await _hotelRepository.GetByIdAsync(request.HotelId) ?? throw new NotFoundException($"Hotel {request.HotelId} not found");
+        if (request.TypePayment == 2) { 
+            var user = await _userRepository.GetUserByIdAsync(userId);
+            if (user == null)
+            {
 
+                throw new NotFoundException($"User {request.HotelId} not found");
+            }
+            else { 
+                if(request.TotalPrice > user.WalletBalance)
+                {
+                    throw new Exception($"Your wallet balance is insufficient!");
+                }
+            }
+        }
         var detail = new Bookingdetail
         {
             UserId = userId,
@@ -92,7 +107,13 @@ public class HotelService : IHotelService
             TotalPrice = request.TotalPrice,
             Status = 1,
             RoomId = request.RoomId,
-            RestaurantId = request.RestaurantId
+            RestaurantId = request.RestaurantId,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Email = request.Email,
+            Phone = request.Phone,
+            Note = request.Note,
+            Country = request.Country
         };
         var created = await _hotelRepository.CreateBookingAsync(detail);
         return created.BookingId;
@@ -110,7 +131,14 @@ public class HotelService : IHotelService
             CheckInDate = b.CheckInDate,
             CheckOutDate = b.CheckOutDate,
             TotalPrice = b.TotalPrice,
-            Approved = b.Approved ?? false
+            Approved = b.Approved ?? false,
+            FirstName = b.FirstName,
+            LastName = b.LastName,
+            Email = b.Email,
+            Phone = b.Phone,
+            Note = b.Note,
+            Country = b.Country
+
         }).ToList();
     }
 
@@ -162,6 +190,10 @@ public class HotelService : IHotelService
         return result;
     }
 
+    public Task<int> ChangeStatusBookingAsync(int bookingId, int status)
+    {
+        return _hotelRepository.ChangeStatusBookingAsync(bookingId, status);
+    }
 }
 
 
