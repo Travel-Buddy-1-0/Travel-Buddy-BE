@@ -49,7 +49,7 @@ public class HotelService : IHotelService
 
     public async Task<List<HotelSummaryDto>> SearchAsync(HotelSearchRequestDto request, int limit = 20, int offset = 0)
     {
-        var hotels = await _hotelRepository.SearchHotelsAsync(CleanProvinceName(request.Location), request.Guests,null, null, request?.Type, request?.Stars, request?.Amenities, limit, offset);
+        var hotels = await _hotelRepository.SearchHotelsAsync(CleanProvinceName(request.Location), request.Guests, null, null, request?.Type, request?.Stars, request?.Amenities, limit, offset);
         return await MapToSummaryAsync(hotels);
     }
 
@@ -84,20 +84,23 @@ public class HotelService : IHotelService
     public async Task<int> BookAsync(HotelBookingRequestDto request, int userId)
     {
         var hotel = await _hotelRepository.GetByIdAsync(request.HotelId) ?? throw new NotFoundException($"Hotel {request.HotelId} not found");
-        if (request.TypePayment == 2) { 
+        if (request.TypePayment == 2)
+        {
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
             {
 
                 throw new NotFoundException($"User {request.HotelId} not found");
             }
-            else { 
-                if(request.TotalPrice > user.WalletBalance)
+            else
+            {
+                if (request.TotalPrice > user.WalletBalance)
                 {
                     throw new Exception($"Your wallet balance is insufficient!");
                 }
             }
         }
+
         var detail = new Bookingdetail
         {
             UserId = userId,
@@ -115,6 +118,14 @@ public class HotelService : IHotelService
             Note = request.Note,
             Country = request.Country
         };
+        if (request.TypePayment == 0)
+        {
+            detail.Status = 0;
+        }
+        else if (request.TypePayment == 1 || request.TypePayment == 2)
+        {
+            detail.Status = 1;
+        }
         var created = await _hotelRepository.CreateBookingAsync(detail);
         return created.BookingId;
     }
@@ -166,7 +177,7 @@ public class HotelService : IHotelService
         foreach (var h in hotels)
         {
             var avg = await _hotelRepository.GetAverageRatingAsync(h.HotelId);
-            var rooms = await _hotelRepository.GetRoomsByHotelAsync(h.HotelId); 
+            var rooms = await _hotelRepository.GetRoomsByHotelAsync(h.HotelId);
 
             result.Add(new HotelSummaryDto
             {
@@ -180,10 +191,10 @@ public class HotelService : IHotelService
                 Rooms = rooms.Select(r => new HotelRoomDto
                 {
                     RoomId = r.RoomId,
-                  
+
                     PricePerNight = r.PricePerNight,
-       
-                   
+
+
                 }).ToList()
             });
         }
