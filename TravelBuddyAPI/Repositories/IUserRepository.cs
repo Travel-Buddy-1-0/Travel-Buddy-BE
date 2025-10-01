@@ -1,4 +1,4 @@
-﻿using BusinessObject.Models;
+﻿using BusinessObject.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +15,7 @@ namespace Repositories
         Task<User> AddUserAsync(User user);
         Task<User> UpdateUserAsync(User user);
         Task DeleteUserAsync(int userId);
-
+        Task<User> UpdateUserByEmailAsync(string email, User updatedUser);
         Task<User> GetUserByEmail(string email);
     }
 }

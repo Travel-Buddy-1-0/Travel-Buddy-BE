@@ -1,10 +1,10 @@
 ﻿using Supabase.Postgrest.Models;
 using Supabase.Postgrest.Attributes;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 
 namespace BusinessObject.Models;
 
-[Table("review")]
+[Table("reviews")]
 public class Review : BaseModel
 {
     [PrimaryKey("review_id", false)]
@@ -29,7 +29,7 @@ public class Review : BaseModel
     public string? Comment { get; set; }
 
     [Column("image")]
-    public JsonObject? Image { get; set; }
+    public JToken? Image { get; set; }
 
     [Column("review_date")]
     public DateTime? ReviewDate { get; set; }

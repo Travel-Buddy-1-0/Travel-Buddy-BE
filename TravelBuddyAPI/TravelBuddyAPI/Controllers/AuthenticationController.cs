@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Supabase.Gotrue;
-using System.Net;
+﻿using BusinessLogic.Exceptions;
+using BusinessLogic.Services;
 using BusinessObject.DTOs;
+using Microsoft.AspNetCore.Mvc;
 using Supabase;
+using Supabase.Gotrue;
+using System.Diagnostics;
+using System.Net;
 namespace TravelBuddyAPI.Controllers
 {
     [ApiController]
@@ -11,19 +14,21 @@ namespace TravelBuddyAPI.Controllers
     {
         private readonly Supabase.Client _client;
         private readonly ILogger<AuthenticationController> _logger;
-        public AuthenticationController(Supabase.Client client, ILogger<AuthenticationController> logger)
+        private readonly IUserService _userService;
+        public AuthenticationController(Supabase.Client client, ILogger<AuthenticationController> logger, IUserService userService)
         {
             _client = client;
             _logger = logger;
+            _userService = userService;
         }
         [HttpPost("register")]
-        public async Task<IResult> Register(RegisterRequestDto request)
+        public async Task<IResult> Register([FromBody] RegisterRequestDto request)
         {
             try
             {
                 var options = new SignUpOptions
                 {
-                    RedirectTo = "https://localhost:7056/Authentication/confirmRegister"
+                    RedirectTo = "http://localhost:5173/success"
                 };
 
                 var session = await _client.Auth.SignUp(request.Email, request.Password, options);
@@ -48,46 +53,75 @@ namespace TravelBuddyAPI.Controllers
                 });
             }
         }
+        [HttpGet("getUser")]
+        public async Task<IActionResult> GetUser([FromHeader] string accessToken)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(accessToken))
+                    return BadRequest(new { error = "Missing access token" });
+                var user = await _client.Auth.GetUser(accessToken);
+                if (user == null)
+                    return NotFound(new { error = "User not found" });
+                var userModel = await _userService.GetUserByEmailAsync(user.Email);
+                return Ok(new UserDto
+                {
+                    UserId = userModel.UserId,
+                    Email = userModel.Email,
+                    FullName = userModel.FullName,
+                    PhoneNumber = userModel.PhoneNumber,
+                    DateOfBirth = userModel.DateOfBirth,
+                    Sex = userModel.Sex,
+                    Photo = userModel.Photo
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetUser");
+                return StatusCode(500, new { error = "Internal server error" });
+            }
+        }
         [HttpPost("confirmRegister")]
-        public async Task<IActionResult> ConfirmRegister([FromQuery] ConfirmRegisterRequestDto request)
+        public async Task<IActionResult> ConfirmRegister([FromBody] ConfirmRegisterRequestDto request)
         {
             try
             {
                 if (string.IsNullOrEmpty(request.AccessToken) || string.IsNullOrEmpty(request.RefreshToken))
                     return BadRequest(new { error = "Missing access or refresh token" });
 
-                // Set lại session (auth state) từ token
+                // Set lại session từ token
                 await _client.Auth.SetSession(request.AccessToken, request.RefreshToken);
 
-                // Lấy thông tin user từ access_token
+                // Lấy thông tin user
                 var user1 = await _client.Auth.GetUser(request.AccessToken);
-                var newUser = new BusinessObject.Models.User
+                if (user1 == null)
+                    return BadRequest(new { error = "User not found" });
+
+                var newUser = new BusinessObject.Entities.User
                 {
                     Email = user1.Email,
                     RegistrationDate = DateTime.Now
                 };
-                if (user1 == null)
-                    return BadRequest(new { error = "User not found" });
-                var response = await _client.From<BusinessObject.Models.User>().Insert(newUser);
 
+                var response = await _userService.CreateUserAsync(newUser);
                 _logger.LogInformation($"User {user1.Email} registered and saved to DB.");
-                return Ok(response.Models);
+                return Ok(response);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in ConfirmRegister");
 
-
-                // Return a Bad Request result with a specific problem detail
-                return BadRequest(new ProblemDetails
+                return BadRequest(new
                 {
-                    Status = (int)HttpStatusCode.BadRequest,
-                    Title = "Redirection Failed",
-                    Detail = "An     error occurred while redirecting the user.",
-                    Instance = Request.Path
+                    status = 400,
+                    title = "Redirection Failed",
+                    detail = ex.Message,
+                    instance = Request.Path
                 });
             }
         }
+
+
 
         [HttpPost("login")]
         public async Task<IResult> Login(RegisterRequestDto request)
@@ -99,6 +133,7 @@ namespace TravelBuddyAPI.Controllers
                 {
                     return Results.BadRequest("Unable to login");
                 }
+                //var user = await _client.Auth.GetUser(session.AccessToken);
                 var userResponse = new UserResponseDto
                 {
                     AccessToken = session.AccessToken,
@@ -106,12 +141,17 @@ namespace TravelBuddyAPI.Controllers
                     ExpiresIn = session.ExpiresIn,
                     TokenType = session.TokenType
                 };
+                //await _client.Auth.SetSession(request.AccessToken, request.RefreshToken);
                 return Results.Ok(userResponse);
+            }
+            catch (Supabase.Gotrue.Exceptions.GotrueException ex)
+            {
+                _logger.LogError($"Supabase Auth Error: {ex.Message}");
+                return Results.BadRequest(new { error = ex.Message, code = ex.Response?.StatusCode });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Unable to login" +
-                    $"");
+                _logger.LogError($"Unable to login: {ex.Message}");
 
                 // Return a Bad Request result with a specific problem detail
                 return Results.BadRequest(new ProblemDetails
@@ -214,5 +254,69 @@ namespace TravelBuddyAPI.Controllers
                 });
             }
         }
+        [HttpGet("login-google")]
+        public async Task<IActionResult> LoginWithGoogle()
+        {
+            try
+            {
+                var options = new SignInOptions
+                {
+                    RedirectTo = "http://localhost:5173/Authentication/oauth-callback" // cái này Hưng sử url để gọi về google-session truyền 2 cái token vào là được
+                };
+
+                // Lấy URL để redirect user sang Google login
+                var url = _client.Auth.SignIn(Constants.Provider.Google, options);
+                return Ok(url.Result.Uri);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in Google Login");
+                return BadRequest(new ProblemDetails
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Title = "Google Login Failed",
+                    Detail = "An error occurred while starting Google login.",
+                    Instance = Request.Path
+                });
+            }
+        }
+
+            [HttpPost("google-session")]
+            public async Task<IActionResult> GoogleSession([FromBody] UserResponseDto dto)
+            {
+                try
+                {
+                Debug.WriteLine("Received AccessToken: {AccessToken}", dto.AccessToken);
+                Debug.WriteLine("Received RefreshToken: {RefreshToken}", dto.RefreshToken);
+
+                await _client.Auth.SetSession(dto.AccessToken, dto.RefreshToken);
+                    var user = await _client.Auth.GetUser(dto.AccessToken);
+
+                    if (user == null)
+                        return BadRequest(new { error = "User not found" });
+                BusinessObject.Entities.User? userModel = null;
+                try
+                {
+                    userModel = await _userService.GetUserByEmailAsync(user.Email);
+                }
+                catch (NotFoundException)
+                {
+                    var newUser = new BusinessObject.Entities.User
+                    {
+                        Email = user.Email,
+                    };
+                    await _userService.CreateUserAsync(newUser);
+                }
+                    return Ok(new
+                    {
+                        Email = user.Email
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in GoogleSession");
+                    return BadRequest(new { error = "Google session error" });
+                }
+            }
     }
 }

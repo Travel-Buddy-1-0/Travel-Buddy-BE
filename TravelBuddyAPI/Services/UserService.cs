@@ -1,6 +1,6 @@
 ﻿using BusinessLogic.Exceptions;
 using BusinessObject.DTOs;
-using BusinessObject.Models;
+using BusinessObject.Entities;
 using Repositories;
 using System.Security.Authentication;
 using System.Text.Json.Nodes;
@@ -40,19 +40,24 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<User> CreateUserAsync(User newUser)
+    public async Task<UserDto> CreateUserAsync(User newUser)
     {
         var existingUser = await _userRepository.GetUserByEmailAsync(newUser.Email);
         if (existingUser != null)
         {
             throw new ConflictException("Email already exists.");
         }
+        var createdUser = await _userRepository.AddUserAsync(newUser);
 
-        // TODO: MÃ HÓA MẬT KHẨU TRƯỚC KHI LƯU VÀO DATABASE!
-        // Dưới đây chỉ là ví dụ, không nên lưu mật khẩu dạng plain text
-        // newUser.Password = HashPassword(newUser.Password);
-
-        return await _userRepository.AddUserAsync(newUser);
+        return new UserDto
+        {
+            Email = createdUser.Email,
+            FullName = createdUser.FullName,
+            PhoneNumber = createdUser.PhoneNumber,
+            DateOfBirth = createdUser.DateOfBirth,
+            Sex = createdUser.Sex,
+            Photo = createdUser.Photo
+        };
     }
 
     public async Task<User> UpdateUserAsync(string email, User updatedUser)
@@ -95,25 +100,30 @@ public class UserService : IUserService
         return user;
     }
 
-    public async Task<UserDto> UpdateUserProfileAsync(int userId, UserProfileUpdateDto updatedProfile)
+    public async Task<UserDto> UpdateUserProfileAsync(string currentEmail, UserProfileUpdateDto updatedProfile)
     {
-        var userToUpdate = await _userRepository.GetUserByIdAsync(userId);
+        // Lấy user từ email cũ (token)
+        var userToUpdate = await _userRepository.GetUserByEmailAsync(currentEmail);
         if (userToUpdate == null)
-        {
-            throw new NotFoundException($"User with ID {userId} not found.");
-        }
+            throw new NotFoundException($"User with Email {currentEmail} not found.");
 
-
+        // Cập nhật các field
         userToUpdate.Username = updatedProfile.Username ?? userToUpdate.Username;
-        userToUpdate.Email = updatedProfile.Email ?? userToUpdate.Email;
         userToUpdate.FullName = updatedProfile.FullName ?? userToUpdate.FullName;
         userToUpdate.PhoneNumber = updatedProfile.PhoneNumber ?? userToUpdate.PhoneNumber;
         userToUpdate.DateOfBirth = updatedProfile.DateOfBirth ?? userToUpdate.DateOfBirth;
         userToUpdate.Sex = updatedProfile.Sex ?? userToUpdate.Sex;
         userToUpdate.Photo = updatedProfile.Image ?? userToUpdate.Photo;
 
-        // Use a dedicated method in the repository for updates
-        var updatedUser = await _userRepository.UpdateUserAsync(userToUpdate);
+        // Email mới (nếu có)
+        var newEmail = updatedProfile.Email ?? userToUpdate.Email;
+
+        // Update user bằng email cũ
+        var updatedUser = await _userRepository.UpdateUserByEmailAsync(currentEmail, userToUpdate);
+
+        // Set email mới cho object trả về (Supabase không thay đổi filter)
+        updatedUser.Email = newEmail;
+
         return new UserDto
         {
             Email = updatedUser.Email,
@@ -124,4 +134,5 @@ public class UserService : IUserService
             Photo = updatedUser.Photo
         };
     }
+
 }
