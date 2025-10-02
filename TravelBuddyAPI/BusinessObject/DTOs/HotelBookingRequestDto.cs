@@ -15,7 +15,7 @@ public class HotelBookingRequestDto
     public int Guests { get; set; }
     public int HotelId { get; set; }
     public int RoomId { get; set; }
-    public int RestaurantId { get; set; }
+    public int? RestaurantId { get; set; }
 }
 
 
