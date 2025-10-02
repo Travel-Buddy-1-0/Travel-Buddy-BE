@@ -28,7 +28,7 @@ jobs:
         run: nuget restore TravelBuddyAPI/TravelBuddyAPI.sln
 
       - name: Publish to folder
-        run: msbuild /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir="\published\"
+        run: msbuild TravelBuddyAPI/TravelBuddyAPI.sln /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir="\published\"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -55,3 +55,4 @@ jobs:
           package: .
 
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F0D7DB64D4044C52B9DF24357C8E3D3C }}
+
