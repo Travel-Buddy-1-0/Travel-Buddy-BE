@@ -11,7 +11,7 @@ public class HotelBookingRequestDto
     public int Guests { get; set; }
     public int HotelId { get; set; }
     public int RoomId { get; set; }
-    public int RestaurantId { get; set; }
+    public int? RestaurantId { get; set; }
 
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
@@ -20,7 +20,7 @@ public class HotelBookingRequestDto
     public string? Phone { get; set; }
     public string? Note { get; set; }
 
-    public int? TypePayment { get; set; } //0 là chưa thanh toán 1 laf banking 2 laf vis
+    public int? TypePayment { get; set; }// 1 laf thanh toan tai noi 2 la  vi
 }
 
 

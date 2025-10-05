@@ -164,11 +164,10 @@ namespace TravelBuddyAPI.Controllers
             }
         }
         [HttpPost("resetpassword")]
-        public async Task<IResult> ResetPassword(string email) 
+        public async Task<IResult> ResetPassword([FromBody] string email)
         {
             try
             {
-                // Gửi email reset password (Supabase sẽ dùng Site URL đã cấu hình)
                 var success = await _client.Auth.ResetPasswordForEmail(email);
 
                 if (!success)
@@ -189,6 +188,7 @@ namespace TravelBuddyAPI.Controllers
                 });
             }
         }
+
 
         [HttpPost("updatepassword")]
         public async Task<IResult> UpdatePassword([FromBody] UpdatePasswordDto request)
