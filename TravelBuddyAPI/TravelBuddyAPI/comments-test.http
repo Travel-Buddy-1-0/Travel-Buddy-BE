@@ -1,0 +1,36 @@
+### Create a root comment
+POST https://localhost:7000/api/blogs/1/comments
+Content-Type: application/json
+
+{
+  "blogId": 1,
+  "userId": 5,
+  "content": "This is a great blog!"
+}
+
+### Create a reply comment
+POST https://localhost:7000/api/blogs/1/comments
+Content-Type: application/json
+
+{
+  "blogId": 1,
+  "userId": 6,
+  "content": "I agree!",
+  "parentCommentId": 1
+}
+
+### Get comments tree by blog id
+GET https://localhost:7000/api/blogs/1/comments
+
+### Update a comment
+PUT https://localhost:7000/api/comments/1
+Content-Type: application/json
+
+{
+  "content": "Updated content"
+}
+
+### Delete a comment (cascades children)
+DELETE https://localhost:7000/api/comments/1
+
+

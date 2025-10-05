@@ -8,10 +8,12 @@ namespace BusinessLogic.Services;
 public class HotelService : IHotelService
 {
     private readonly IHotelRepository _hotelRepository;
+    private readonly IUserRepository _userRepository;
 
-    public HotelService(IHotelRepository hotelRepository)
+    public HotelService(IHotelRepository hotelRepository, IUserRepository userRepository)
     {
         _hotelRepository = hotelRepository;
+        _userRepository = userRepository;
     }
 
     public async Task<List<HotelSummaryDto>> GetSuggestionsAsync(int limit = 4)
@@ -47,7 +49,7 @@ public class HotelService : IHotelService
 
     public async Task<List<HotelSummaryDto>> SearchAsync(HotelSearchRequestDto request, int limit = 20, int offset = 0)
     {
-        var hotels = await _hotelRepository.SearchHotelsAsync(CleanProvinceName(request.Location), request.Guests,null, null, request?.Type, request?.Stars, request?.Amenities, limit, offset);
+        var hotels = await _hotelRepository.SearchHotelsAsync(CleanProvinceName(request.Location), request.Guests, null, null, request?.Type, request?.Stars, request?.Amenities, limit, offset);
         return await MapToSummaryAsync(hotels);
     }
 
@@ -82,6 +84,22 @@ public class HotelService : IHotelService
     public async Task<int> BookAsync(HotelBookingRequestDto request, int userId)
     {
         var hotel = await _hotelRepository.GetByIdAsync(request.HotelId) ?? throw new NotFoundException($"Hotel {request.HotelId} not found");
+        if (request.TypePayment == 2)
+        {
+            var user = await _userRepository.GetUserByIdAsync(userId);
+            if (user == null)
+            {
+
+                throw new NotFoundException($"User {request.HotelId} not found");
+            }
+            else
+            {
+                if (request.TotalPrice > user.WalletBalance)
+                {
+                    throw new Exception($"Your wallet balance is insufficient!");
+                }
+            }
+        }
 
         var detail = new Bookingdetail
         {
@@ -92,8 +110,22 @@ public class HotelService : IHotelService
             TotalPrice = request.TotalPrice,
             Status = 1,
             RoomId = request.RoomId,
-            RestaurantId = request.RestaurantId
+            RestaurantId = request.RestaurantId,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Email = request.Email,
+            Phone = request.Phone,
+            Note = request.Note,
+            Country = request.Country
         };
+        if (request.TypePayment == 0)
+        {
+            detail.Status = 0;
+        }
+        else if (request.TypePayment == 1 || request.TypePayment == 2)
+        {
+            detail.Status = 1;
+        }
         var created = await _hotelRepository.CreateBookingAsync(detail);
         return created.BookingId;
     }
@@ -110,7 +142,15 @@ public class HotelService : IHotelService
             CheckInDate = b.CheckInDate,
             CheckOutDate = b.CheckOutDate,
             TotalPrice = b.TotalPrice,
-            Approved = b.Approved ?? false
+            Approved = b.Approved ?? false,
+            FirstName = b.FirstName,
+            LastName = b.LastName,
+            Email = b.Email,
+            Phone = b.Phone,
+            Note = b.Note,
+            Country = b.Country,
+            Status = b.Status
+
         }).ToList();
     }
 
@@ -137,7 +177,7 @@ public class HotelService : IHotelService
         foreach (var h in hotels)
         {
             var avg = await _hotelRepository.GetAverageRatingAsync(h.HotelId);
-            var rooms = await _hotelRepository.GetRoomsByHotelAsync(h.HotelId); 
+            var rooms = await _hotelRepository.GetRoomsByHotelAsync(h.HotelId);
 
             result.Add(new HotelSummaryDto
             {
@@ -151,10 +191,10 @@ public class HotelService : IHotelService
                 Rooms = rooms.Select(r => new HotelRoomDto
                 {
                     RoomId = r.RoomId,
-                  
+
                     PricePerNight = r.PricePerNight,
-       
-                   
+
+
                 }).ToList()
             });
         }
@@ -162,6 +202,10 @@ public class HotelService : IHotelService
         return result;
     }
 
+    public Task<int> ChangeStatusBookingAsync(int bookingId, int status)
+    {
+        return _hotelRepository.ChangeStatusBookingAsync(bookingId, status);
+    }
 }
 
 

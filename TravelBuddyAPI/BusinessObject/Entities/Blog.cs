@@ -28,4 +28,6 @@ public partial class Blog
     public virtual Hotel? Hotel { get; set; }
 
     public virtual Restaurant? Restaurant { get; set; }
+    public virtual ICollection<CommentBlog> Comments { get; set; } = new List<CommentBlog>();
+
 }

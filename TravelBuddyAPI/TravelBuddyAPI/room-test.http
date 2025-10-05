@@ -1,0 +1,11 @@
+### Get Room Detail by ID (with last checkout date)
+GET https://localhost:7000/api/room/1
+Content-Type: application/json
+
+### Get Room Detail by ID (Non-existent)
+GET https://localhost:7000/api/room/999
+Content-Type: application/json
+
+### Get Room Detail by ID (Another room)
+GET https://localhost:7000/api/room/2
+Content-Type: application/json
