@@ -25,10 +25,10 @@ namespace Repositories
             return await _context.CommentBlogs.FirstOrDefaultAsync(c => c.CommentId == commentId);
         }
 
-        public async Task<List<CommentBlog>> GetByBlogIdAsync(int blogId)
+        public async Task<List<CommentBlog>> GetByBlogIdAsync(string blogId)
         {
             return await _context.CommentBlogs
-                .Where(c => c.BlogId == blogId)
+                .Where(c => c.BlogOnlineId == blogId)
                 .ToListAsync();
         }
 

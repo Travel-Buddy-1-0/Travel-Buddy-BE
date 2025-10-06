@@ -9,6 +9,7 @@ namespace BusinessObject.Entities
     public partial class CommentBlog
     {
         public int CommentId { get; set; }
+        public string BlogOnlineId { get; set; }
 
         public int BlogId { get; set; }  
 

@@ -50,6 +50,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Useractivity> Useractivities { get; set; }
 
     public virtual DbSet<Userpreference> Userpreferences { get; set; }
+    public virtual DbSet<Favorite> Favorites { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -57,6 +58,30 @@ public partial class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Favorite>(entity =>
+        {
+            entity.HasKey(e => e.FavoriteId).HasName("favorite_pkey");
+
+            entity.ToTable("favorite");
+
+            entity.Property(e => e.FavoriteId).HasColumnName("favorite_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.TargetType)
+                .HasMaxLength(50)
+                .HasColumnName("target_type");
+            entity.Property(e => e.TargetId).HasColumnName("target_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.Favorites)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("favorite_user_id_fkey");
+        });
+
         modelBuilder.Entity<PaymentHistory>(entity =>
         {
             entity.ToTable("payment_history");
@@ -107,6 +132,8 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.CommentId).HasColumnName("comment_id");
             entity.Property(e => e.BlogId).HasColumnName("blog_id");
+            entity.Property(e => e.BlogOnlineId).HasColumnName("blog_online_id");
+
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Content).HasColumnName("content");
             entity.Property(e => e.CreatedAt)

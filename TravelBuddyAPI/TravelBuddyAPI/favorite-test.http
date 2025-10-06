@@ -1,0 +1,66 @@
+### Favorite API Test Requests
+
+### Base URL
+@baseUrl = https://localhost:7000/api/favorite
+
+### 1. Get all favorites with pagination
+GET {{baseUrl}}?pageNumber=1&pageSize=10&sortBy=CreatedAt&sortOrder=desc
+Content-Type: application/json
+
+### 2. Get favorites by user ID
+GET {{baseUrl}}/user/1
+Content-Type: application/json
+
+### 3. Get favorite by ID
+GET {{baseUrl}}/1
+Content-Type: application/json
+
+### 4. Check if item is favorited
+GET {{baseUrl}}/check/1/HOTEL/123
+Content-Type: application/json
+
+### 5. Create a new favorite
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+    "userId": 1,
+    "targetType": "HOTEL",
+    "targetId": "123"
+}
+
+### 6. Toggle favorite (add if not exists, remove if exists)
+POST {{baseUrl}}/toggle
+Content-Type: application/json
+
+{
+    "userId": 1,
+    "targetType": "RESTAURANT",
+    "targetId": "456"
+}
+
+### 7. Update favorite
+PUT {{baseUrl}}/1
+Content-Type: application/json
+
+{
+    "userId": 1,
+    "targetType": "HOTEL",
+    "targetId": "789"
+}
+
+### 8. Delete favorite by ID
+DELETE {{baseUrl}}/1
+Content-Type: application/json
+
+### 9. Remove favorite by user and target
+DELETE {{baseUrl}}/user/1/HOTEL/123
+Content-Type: application/json
+
+### 10. Get filtered favorites by target type
+GET {{baseUrl}}?targetType=HOTEL&pageNumber=1&pageSize=5
+Content-Type: application/json
+
+### 11. Get filtered favorites by user and target type
+GET {{baseUrl}}?userId=1&targetType=RESTAURANT&pageNumber=1&pageSize=10
+Content-Type: application/json

@@ -47,4 +47,7 @@ public partial class User
     public virtual ICollection<CommentBlog> CommentBlogs { get; set; } = new List<CommentBlog>();
     public virtual ICollection<PaymentHistory> PaymentHistories { get; set; } = new List<PaymentHistory>();
 
+    public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
+
+
 }
