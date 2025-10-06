@@ -12,4 +12,5 @@ public interface IUserService
     Task DeleteUserAsync(string email);
     Task<User> LoginAsync(string email, string password);
     Task<User> GetUserByEmailAsync(string email);
+    Task<User> Deposit(int id, decimal amount);
 }

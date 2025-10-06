@@ -22,9 +22,9 @@ public class PayOsService
         _payOS = new PayOS(settings.ClientId, settings.ApiKey, settings.ChecksumKey);
     }
 
-    public async Task<string> CreatePaymentLink(string description, int amount)
+    public async Task<string> CreatePaymentLink(string description, int amount, long orderCode)
     {
-        var orderCodeLong = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        //var orderCodeLong = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         var items = new List<ItemData>
         {
@@ -32,7 +32,7 @@ public class PayOsService
         };
 
         var paymentRequest = new PaymentData(
-            orderCode: orderCodeLong,
+            orderCode: orderCode,
             amount: amount,
             description: description,
             items: items,
