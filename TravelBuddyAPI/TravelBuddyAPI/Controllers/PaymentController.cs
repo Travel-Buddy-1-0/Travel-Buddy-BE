@@ -1,6 +1,11 @@
-﻿using BusinessObject.DTOs;
+﻿using BusinessLogic.Services;
+using BusinessObject.DTOs;
+using BusinessObject.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Services;
+using System.Text.Json;
+
 
 namespace TravelBuddyAPI.Controllers
 {
@@ -9,46 +14,64 @@ namespace TravelBuddyAPI.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly PayOsService _payOsService;
+        private readonly IPaymentHistoryService _paymentService;
+        private readonly IUserService _userService;
 
         public PaymentController(PayOsService payOsService)
         {
             _payOsService = payOsService;
         }
 
-        // 📤 Tạo link thanh toán
         [HttpPost("create-link")]
         public async Task<IActionResult> CreatePaymentLink([FromBody] CreatePaymentRequest request)
         {
+            var orderCode = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            var payment = new PaymentHistory
+            {
+                UserId = request.UserId,
+                TransactionCode = orderCode,
+                Amount = request.Amount,
+                Status = "PENDING",
+                Description = request.Description,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _paymentService.AddAsync(payment);
             var url = await _payOsService.CreatePaymentLink(
                 description: request.Description,
-                amount: request.Amount
+                amount: request.Amount,
+                orderCode: orderCode
             );
 
             return Ok(new { paymentUrl = url });
         }
 
-        // 📥 Nhận callback thanh toán từ PayOS
+
         [HttpPost("webhook")]
         public async Task<IActionResult> PayOsWebhook()
         {
-            // ✅ Lấy raw body để xác minh chữ ký
             using var reader = new StreamReader(Request.Body);
             var rawBody = await reader.ReadToEndAsync();
 
             var signature = Request.Headers["x-signature"].FirstOrDefault();
-            if (signature == null)
-                return BadRequest("Missing signature header.");
+            if (!_payOsService.VerifySignature(rawBody, signature))
+                return Unauthorized();
 
-            // ✅ Kiểm tra chữ ký xem có hợp lệ không
-            var isValid = _payOsService.VerifySignature(rawBody, signature);
-            if (!isValid)
-                return Unauthorized("Invalid signature.");
+            var payload = JsonSerializer.Deserialize<PayOsWebhookPayload>(rawBody);
+            var orderCode = payload.orderCode;
 
-            // ✅ Nếu chữ ký hợp lệ → xử lý nội dung webhook
-            Console.WriteLine("✅ Webhook received & verified: " + rawBody);
+            // ✅ Tìm bản ghi trong DB
+            var payment = await _paymentService.GetByOrderCodeAsync(orderCode);
+            if (payment == null) return NotFound();
 
-            // TODO: Cập nhật trạng thái đơn hàng trong DB tại đây
+            // ✅ Cập nhật trạng thái
+            payment.Status = payload.status; // "PAID" hoặc "CANCELLED"
+            payment.UpdatedAt = DateTime.UtcNow;
+            await _paymentService.UpdateAsync(payment);
+            await _userService.Deposit(payment.UserId, payment.Amount);
+            //Console.WriteLine($"💰 User {payment.UserId} đã {payment.Status} giao dịch {orderCode}");
             return Ok();
         }
+
     }
 }

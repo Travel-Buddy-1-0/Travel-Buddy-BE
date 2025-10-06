@@ -22,6 +22,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Conversation> Conversations { get; set; }
 
+    public virtual DbSet<PaymentHistory> PaymentHistories { get; set; }
+
     public virtual DbSet<Group> Groups { get; set; }
 
     public virtual DbSet<Hotel> Hotels { get; set; }
@@ -55,6 +57,48 @@ public partial class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<PaymentHistory>(entity =>
+        {
+            entity.ToTable("payment_history");
+                        entity.HasKey(e => e.PaymentId)
+                  .HasName("pk_payment_history");
+            entity.Property(e => e.PaymentId)
+                  .HasColumnName("payment_id");
+            entity.Property(e => e.UserId)
+                  .HasColumnName("user_id");
+            entity.Property(e => e.Amount)
+                  .HasColumnName("amount")
+                  .HasPrecision(12, 2);
+            entity.Property(e => e.Currency)
+                  .HasColumnName("currency")
+                  .HasMaxLength(10)
+                  .HasDefaultValueSql("'VND'");
+            entity.Property(e => e.PaymentMethod)
+                  .HasColumnName("payment_method")
+                  .HasMaxLength(50)
+                  .HasDefaultValueSql("'PayOS'");
+            entity.Property(e => e.TransactionCode)
+                  .HasColumnName("transaction_code")
+                  .HasMaxLength(100);
+            entity.Property(e => e.Status)
+                  .HasColumnName("status")
+                  .HasMaxLength(20);
+            entity.Property(e => e.Description)
+                  .HasColumnName("description");
+            entity.Property(e => e.CreatedAt)
+                  .HasColumnName("created_at")
+                  .HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt)
+                  .HasColumnName("update_at")
+                  .HasDefaultValueSql("NOW()");
+            // Quan hệ với User
+            entity.HasOne(d => d.User)
+                  .WithMany(p => p.PaymentHistories)
+                  .HasForeignKey(d => d.UserId)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("fk_payment_history_user");
+        });
+
         modelBuilder.Entity<CommentBlog>(entity =>
         {
             entity.HasKey(e => e.CommentId).HasName("comment_blog_pkey");

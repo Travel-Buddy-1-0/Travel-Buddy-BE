@@ -39,6 +39,9 @@ namespace TravelBuddyAPI
             builder.Services.Configure<PayOsSettings>(builder.Configuration.GetSection("PayOS"));
             builder.Services.AddSingleton<PayOsService>();
             builder.Services.AddSingleton(provider => new Supabase.Client(url, key, options));
+            builder.Services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
+            builder.Services.AddScoped<IPaymentHistoryService, PaymentHistoryService>();
+
             builder.Services.AddScoped<IUserRepository, UserRepository>();
 
             builder.Services.AddScoped<IHotelRepository, HotelRepository>();
