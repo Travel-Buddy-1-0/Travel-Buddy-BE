@@ -72,7 +72,8 @@ namespace TravelBuddyAPI.Controllers
                     PhoneNumber = userModel.PhoneNumber,
                     DateOfBirth = userModel.DateOfBirth,
                     Sex = userModel.Sex,
-                    Photo = userModel.Photo
+                    Photo = userModel.Photo,
+                    WalletBalance = userModel.WalletBalance
                 });
             }
             catch (Exception ex)

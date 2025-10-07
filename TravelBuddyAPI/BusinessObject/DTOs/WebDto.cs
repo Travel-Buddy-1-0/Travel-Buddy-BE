@@ -14,6 +14,8 @@ namespace BusinessObject.DTOs
         public string? Photo { get; set; }
         public string Role { get; set; } = null!;
         public string? Sex { get; set; }
+
+        public decimal? WalletBalance { get; set; }
     }
 
     public class AuthRequestDto
