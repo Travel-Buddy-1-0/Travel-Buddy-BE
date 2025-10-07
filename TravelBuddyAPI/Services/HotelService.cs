@@ -2,6 +2,7 @@
 using BusinessObject.DTOs;
 using BusinessObject.Entities;
 using Repositories;
+using System.IO.Pipes;
 
 namespace BusinessLogic.Services;
 
@@ -9,11 +10,13 @@ public class HotelService : IHotelService
 {
     private readonly IHotelRepository _hotelRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IPaymentHistoryRepository _paymentHistoryRepository;
 
-    public HotelService(IHotelRepository hotelRepository, IUserRepository userRepository)
+    public HotelService(IHotelRepository hotelRepository, IUserRepository userRepository, IPaymentHistoryRepository paymentHistoryRepository    )
     {
         _hotelRepository = hotelRepository;
         _userRepository = userRepository;
+        _paymentHistoryRepository = paymentHistoryRepository;
     }
 
     public async Task<List<HotelSummaryDto>> GetSuggestionsAsync(int limit = 4)
@@ -89,7 +92,6 @@ public class HotelService : IHotelService
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
             {
-
                 throw new NotFoundException($"User {request.HotelId} not found");
             }
             else
@@ -98,6 +100,10 @@ public class HotelService : IHotelService
                 {
                     throw new Exception($"Your wallet balance is insufficient!");
                 }
+                user.WalletBalance = user.WalletBalance - request.TotalPrice;
+                await _userRepository.UpdateUserAsync(user);
+               
+
             }
         }
 
@@ -127,6 +133,17 @@ public class HotelService : IHotelService
             detail.Status = 1;
         }
         var created = await _hotelRepository.CreateBookingAsync(detail);
+
+        PaymentHistory paymentHistory = new PaymentHistory();
+        paymentHistory.UserId = userId;
+        paymentHistory.Amount = (decimal)request.TotalPrice;
+        paymentHistory.PaymentMethod = "Wallet";
+        paymentHistory.Status = "Done";
+        paymentHistory.Description = "Thanh toán đơn hàng " +created.BookingId +" bằng ví thành công";
+        paymentHistory.CreatedAt = DateTime.Now;
+        var random = new Random();
+        paymentHistory.TransactionCode = ((long)random.Next() << 32) | (long)random.Next();
+        _paymentHistoryRepository.AddAsync(paymentHistory);
         return created.BookingId;
     }
 

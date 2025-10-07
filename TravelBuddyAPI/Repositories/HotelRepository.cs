@@ -1,4 +1,4 @@
-using BusinessObject.Data;
+﻿using BusinessObject.Data;
 using BusinessObject.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -162,6 +162,16 @@ namespace Repositories
             }
             query.Status = status;
 
+            PaymentHistory paymentHistory = new PaymentHistory();
+            paymentHistory.UserId = user.UserId;
+            paymentHistory.Amount = (decimal)query.TotalPrice;
+            paymentHistory.PaymentMethod = "Wallet";
+            paymentHistory.Status = "Done";
+            paymentHistory.Description = "Hoàn tiền vào ví thành công";
+            paymentHistory.CreatedAt = DateTime.Now;
+            var random = new Random();
+            paymentHistory.TransactionCode = ((long)random.Next() << 32) | (long)random.Next();
+            _context.PaymentHistories.Add(paymentHistory);
             _context.Users.Update(user);
             _context.Bookingdetails.Update(query);
             _context.SaveChanges();

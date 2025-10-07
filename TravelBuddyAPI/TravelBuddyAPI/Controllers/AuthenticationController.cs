@@ -28,7 +28,7 @@ namespace TravelBuddyAPI.Controllers
             {
                 var options = new SignUpOptions
                 {
-                    RedirectTo = "http://localhost:5173/success"
+                    RedirectTo = "https://travel-buddy-fe.vercel.app/register"
                 };
 
                 var session = await _client.Auth.SignUp(request.Email, request.Password, options);
@@ -261,7 +261,7 @@ namespace TravelBuddyAPI.Controllers
             {
                 var options = new SignInOptions
                 {
-                    RedirectTo = "http://localhost:5173/Authentication/oauth-callback" // cái này Hưng sử url để gọi về google-session truyền 2 cái token vào là được
+                    RedirectTo = "https://travel-buddy-fe.vercel.app/Authentication/oauth-callback" // cái này Hưng sử url để gọi về google-session truyền 2 cái token vào là được
                 };
 
                 // Lấy URL để redirect user sang Google login
