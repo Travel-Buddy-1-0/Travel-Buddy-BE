@@ -22,6 +22,7 @@ namespace BusinessObject.Models
         [Column("restaurant_id")]
         public int? RestaurantId { get; set; }
 
+
         [Column("booking_date")]
         public DateTime BookingDate { get; set; } = DateTime.UtcNow;
 

@@ -1,10 +1,10 @@
 ﻿using Supabase.Postgrest.Models;
 using Supabase.Postgrest.Attributes;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 
 namespace BusinessObject.Models;
 
-[Table("room")]
+[Table("rooms")]
 public class Room : BaseModel
 {
     [PrimaryKey("room_id", false)]
@@ -29,5 +29,5 @@ public class Room : BaseModel
     public bool? IsAvailable { get; set; }
 
     [Column("image")]
-    public JsonObject? Image { get; set; }
+    public JToken? Image { get; set; }
 }
