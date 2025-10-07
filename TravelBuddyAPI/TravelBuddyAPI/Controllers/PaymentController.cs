@@ -16,10 +16,14 @@ namespace TravelBuddyAPI.Controllers
         private readonly PayOsService _payOsService;
         private readonly IPaymentHistoryService _paymentService;
         private readonly IUserService _userService;
+        private readonly ILogger<PaymentController> _logger;
 
-        public PaymentController(PayOsService payOsService)
+        public PaymentController(PayOsService payOsService, IPaymentHistoryService paymentService, IUserService userService, ILogger<PaymentController> logger)
         {
             _payOsService = payOsService;
+            _paymentService = paymentService;
+            _userService = userService;
+            _logger = logger;
         }
 
         [HttpPost("create-link")]
@@ -36,6 +40,7 @@ namespace TravelBuddyAPI.Controllers
                 Description = request.Description,
                 CreatedAt = DateTime.UtcNow
             };
+            _logger.LogInformation($"Tạo payment record: UserId={payment.UserId}, Amount={payment.Amount}, OrderCode={payment.TransactionCode}");
             await _paymentService.AddAsync(payment);
             var url = await _payOsService.CreatePaymentLink(
                 description: request.Description,
@@ -69,7 +74,7 @@ namespace TravelBuddyAPI.Controllers
             payment.UpdatedAt = DateTime.UtcNow;
             await _paymentService.UpdateAsync(payment);
             await _userService.Deposit(payment.UserId, payment.Amount);
-            //Console.WriteLine($"💰 User {payment.UserId} đã {payment.Status} giao dịch {orderCode}");
+            Console.WriteLine($"💰 User {payment.UserId} đã {payment.Status} giao dịch {orderCode}");
             return Ok();
         }
 
