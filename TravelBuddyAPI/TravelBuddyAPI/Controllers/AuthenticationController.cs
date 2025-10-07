@@ -28,7 +28,7 @@ namespace TravelBuddyAPI.Controllers
             {
                 var options = new SignUpOptions
                 {
-                    RedirectTo = "https://travel-buddy-fe.vercel.app/register"
+                    RedirectTo = "https://travel-buddy-fe.vercel.app/success"
                 };
 
                 var session = await _client.Auth.SignUp(request.Email, request.Password, options);
@@ -260,10 +260,15 @@ namespace TravelBuddyAPI.Controllers
         {
             try
             {
-                var options = new SignInOptions
+                var options = new Supabase.Gotrue.SignInOptions
                 {
-                    RedirectTo = "https://travel-buddy-fe.vercel.app/Authentication/oauth-callback" // cái này Hưng sử url để gọi về google-session truyền 2 cái token vào là được
+                    RedirectTo = "https://travel-buddy-fe.vercel.app/Authentication/oauth-callback"
                 };
+
+                //var options = new SignInOptions
+                //{
+                //    RedirectTo =  // cái này Hưng sử url để gọi về google-session truyền 2 cái token vào là được
+                //};
 
                 // Lấy URL để redirect user sang Google login
                 var url = _client.Auth.SignIn(Constants.Provider.Google, options);
