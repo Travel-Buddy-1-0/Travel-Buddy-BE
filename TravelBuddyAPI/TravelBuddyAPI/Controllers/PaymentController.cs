@@ -75,17 +75,16 @@ namespace TravelBuddyAPI.Controllers
 
                 // 3. Deserialization và Logic nghiệp vụ
                 var payload = JsonSerializer.Deserialize<PayOsWebhookPayload>(rawBody);
-                var orderCode = payload.orderCode;
+                var orderCode = payload.data.orderCode;
+                string payOsStatusCode = payload.data.code;
+                string statusForDb = (payOsStatusCode == "00") ? "PAID" : "FAILED"; // Cập nhật logic này theo tài liệu PayOS
 
+                // ✅ Tìm bản ghi trong DB
                 var payment = await _paymentService.GetByOrderCodeAsync(orderCode);
-                if (payment == null)
-                {
-                    _logger.LogWarning($"OrderCode {orderCode} not found in DB.");
-                    return Ok(); // Trả về Ok để PayOS không gửi lại, dù không tìm thấy
-                }
+                if (payment == null) return NotFound();
 
-                // Cập nhật trạng thái
-                payment.Status = payload.status;
+                // ✅ Cập nhật trạng thái
+                payment.Status = statusForDb;
                 payment.UpdatedAt = DateTime.UtcNow;
                 await _paymentService.UpdateAsync(payment);
 
