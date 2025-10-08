@@ -44,6 +44,23 @@ public class PayOsService
         return paymentLink.checkoutUrl;
     }
 
+    public async Task ConfigWebhookUrl(string newWebhookUrl)
+    {
+        try
+        {
+            // newWebhookUrl phải là đường dẫn công khai (Public HTTPS URL) của Endpoint bạn đã tạo ở Bước 1
+            string result = await _payOS.confirmWebhook(newWebhookUrl);
+
+            // `result` sẽ là một chuỗi JSON chứa kết quả xác thực và cấu hình
+            Console.WriteLine($"Webhook confirmation result: {result}");
+
+            // Nếu thành công, URL Webhook của bạn sẽ được thiết lập hoặc cập nhật.
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error confirming webhook: {ex.Message}");
+        }
+    }
     public bool VerifySignature(string rawBody, string signature)
     {
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_checksumKey));
