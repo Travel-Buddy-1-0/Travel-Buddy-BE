@@ -51,6 +51,7 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Userpreference> Userpreferences { get; set; }
     public virtual DbSet<Favorite> Favorites { get; set; }
+    public virtual DbSet<FeedbackHotel> FeedbackHotels { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -663,6 +664,36 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("userpreference_user_id_fkey");
+        });
+
+        modelBuilder.Entity<FeedbackHotel>(entity =>
+        {
+            entity.HasKey(e => e.FeedbackId).HasName("feedback_hotel_pkey");
+
+            entity.ToTable("feedback_hotel");
+
+            entity.Property(e => e.FeedbackId).HasColumnName("feedback_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.HotelId).HasColumnName("hotel_id");
+            entity.Property(e => e.Rating).HasColumnName("rating");
+            entity.Property(e => e.Comment).HasColumnName("comment");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("feedback_hotel_user_id_fkey");
+
+            entity.HasOne(d => d.Hotel).WithMany()
+                .HasForeignKey(d => d.HotelId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("feedback_hotel_hotel_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

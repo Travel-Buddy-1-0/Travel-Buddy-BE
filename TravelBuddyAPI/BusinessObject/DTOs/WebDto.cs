@@ -141,15 +141,6 @@ namespace BusinessObject.DTOs
         public int? LocationId { get; set; }
     }
 
-    public class UserActivityDto
-    {
-        public int ActivityId { get; set; }
-        public int? UserId { get; set; }
-        public string? ActivityType { get; set; }
-        public DateTime? ActivityDate { get; set; }
-        public string? Metadata { get; set; }
-    }
-
     public class UserPreferenceDto
     {
         public int PreferenceId { get; set; }
