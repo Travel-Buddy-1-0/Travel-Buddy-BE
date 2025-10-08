@@ -96,19 +96,6 @@ namespace BusinessObject.DTOs
         public string? Address { get; set; }
     }
 
-    public class ReviewDto
-    {
-        public int ReviewId { get; set; }
-        public int? UserId { get; set; }
-        public int? TourId { get; set; }
-        public int? HotelId { get; set; }
-        public int? RestaurantId { get; set; }
-        public int? Rating { get; set; }
-        public string? Comment { get; set; }
-        public string? Image { get; set; }
-        public DateTime? ReviewDate { get; set; }
-    }
-
     public class RoomDto1
     {
         public int RoomId { get; set; }
