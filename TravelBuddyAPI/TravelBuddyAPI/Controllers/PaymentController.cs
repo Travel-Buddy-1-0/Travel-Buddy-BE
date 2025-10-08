@@ -47,6 +47,7 @@ namespace TravelBuddyAPI.Controllers
                 amount: request.Amount,
                 orderCode: orderCode
             );
+          
 
             return Ok(new { paymentUrl = url });
         }
@@ -55,27 +56,56 @@ namespace TravelBuddyAPI.Controllers
         [HttpPost("webhook")]
         public async Task<IActionResult> PayOsWebhook()
         {
-            using var reader = new StreamReader(Request.Body);
-            var rawBody = await reader.ReadToEndAsync();
+            // Bắt đầu khối try-catch để đảm bảo không bị lỗi 500
+            try
+            {
+                // 1. Đọc Raw Body
+                using var reader = new StreamReader(Request.Body);
+                var rawBody = await reader.ReadToEndAsync();
 
-            var signature = Request.Headers["x-signature"].FirstOrDefault();
-            if (!_payOsService.VerifySignature(rawBody, signature))
-                return Unauthorized();
+                _logger.LogInformation($"PayOS Webhook received. Raw Body: {rawBody}");
 
-            var payload = JsonSerializer.Deserialize<PayOsWebhookPayload>(rawBody);
-            var orderCode = payload.orderCode;
+                // 2. Xác thực Signature
+                var signature = Request.Headers["x-signature"].FirstOrDefault();
+                if (!_payOsService.VerifySignature(rawBody, signature))
+                {
+                    _logger.LogWarning("Webhook signature verification failed.");
+                    return Unauthorized(); // Trả về 401 nếu xác thực thất bại
+                }
 
-            // ✅ Tìm bản ghi trong DB
-            var payment = await _paymentService.GetByOrderCodeAsync(orderCode);
-            if (payment == null) return NotFound();
+                // 3. Deserialization và Logic nghiệp vụ
+                var payload = JsonSerializer.Deserialize<PayOsWebhookPayload>(rawBody);
+                var orderCode = payload.orderCode;
 
-            // ✅ Cập nhật trạng thái
-            payment.Status = payload.status; // "PAID" hoặc "CANCELLED"
-            payment.UpdatedAt = DateTime.UtcNow;
-            await _paymentService.UpdateAsync(payment);
-            await _userService.Deposit(payment.UserId, payment.Amount);
-            Console.WriteLine($"💰 User {payment.UserId} đã {payment.Status} giao dịch {orderCode}");
-            return Ok();
+                var payment = await _paymentService.GetByOrderCodeAsync(orderCode);
+                if (payment == null)
+                {
+                    _logger.LogWarning($"OrderCode {orderCode} not found in DB.");
+                    return Ok(); // Trả về Ok để PayOS không gửi lại, dù không tìm thấy
+                }
+
+                // Cập nhật trạng thái
+                payment.Status = payload.status;
+                payment.UpdatedAt = DateTime.UtcNow;
+                await _paymentService.UpdateAsync(payment);
+
+                // Cập nhật tiền (Nếu lỗi ở đây, bạn sẽ bị 500)
+                await _userService.Deposit(payment.UserId, payment.Amount);
+
+                _logger.LogInformation($"💰 User {payment.UserId} đã {payment.Status} giao dịch {orderCode} thành công.");
+
+                // 4. Trả về 200 OK
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                // Ghi log chi tiết lỗi 500
+                _logger.LogError(ex, "LỖI NỘI BỘ (500) khi xử lý PayOS Webhook.");
+
+                // QUAN TRỌNG: Trả về 200 OK để PayOS ngừng thử lại, 
+                // sau đó bạn có thể kiểm tra Log để khắc phục lỗi.
+                return Ok(new { error = 1, message = "Internal error, but webhook acknowledged." });
+            }
         }
 
     }

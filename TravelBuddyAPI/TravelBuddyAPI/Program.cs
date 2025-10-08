@@ -18,6 +18,8 @@ namespace TravelBuddyAPI
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);            
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.Configure<PayOsSettings>(builder.Configuration.GetSection("PayOS"));
+            builder.Services.AddSingleton<PayOsService>();
             // Add Supabase for authentication only
             // --- Supabase config ---
             var url = builder.Configuration["Supabase:Url"];
@@ -36,8 +38,7 @@ namespace TravelBuddyAPI
             // Add services to the container.
 
             // --- Services ---
-            builder.Services.Configure<PayOsSettings>(builder.Configuration.GetSection("PayOS"));
-            builder.Services.AddSingleton<PayOsService>();
+            
             builder.Services.AddSingleton(provider => new Supabase.Client(url, key, options));
             builder.Services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
             builder.Services.AddScoped<IPaymentHistoryService, PaymentHistoryService>();
@@ -107,7 +108,32 @@ namespace TravelBuddyAPI
             app.UseAuthorization();
 
             app.MapControllers();
+            const string PAYOS_WEBHOOK_URL = "https://travel-buddy-web.azurewebsites.net/api/Payment/webhook";
 
+            // Tạo một scope để lấy PayOsService (đã được đăng ký ở trên)
+            using (var scope = app.Services.CreateScope())
+            {
+                var serviceProvider = scope.ServiceProvider;
+                var payOsService = serviceProvider.GetRequiredService<PayOsService>();
+                var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+
+                try
+                {
+                    logger.LogInformation($"[PayOS Config] Đang xác nhận Webhook URL: {PAYOS_WEBHOOK_URL}");
+
+                    // Gọi phương thức cấu hình Webhook. Dùng .Result để chờ async trong quá trình khởi động.
+                    payOsService.ConfigWebhookUrl(PAYOS_WEBHOOK_URL).Wait();
+
+                    logger.LogInformation("[PayOS Config] Webhook URL đã được thiết lập thành công.");
+                }
+                catch (Exception ex)
+                {
+                    // Ghi log lỗi nếu không thể thiết lập Webhook
+                    logger.LogError(ex, "[PayOS Config] LỖI FATAL khi thiết lập Webhook PayOS. Kiểm tra lại keys và URL.");
+                    // (Tùy chọn) Thả ngoại lệ để ngăn ứng dụng khởi động nếu cấu hình Webhook là bắt buộc
+                    // throw; 
+                }
+            }
             app.Run();
 
         }
