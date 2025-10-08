@@ -103,7 +103,7 @@ namespace TravelBuddyAPI.Controllers
 
                 // QUAN TRỌNG: Trả về 200 OK để PayOS ngừng thử lại, 
                 // sau đó bạn có thể kiểm tra Log để khắc phục lỗi.
-                return Ok(new { error = 1, message = "Internal error, but webhook acknowledged." });
+                return Ok(new { error = 1, message = "Internal error, but webhook acknowledged. /n" + ex });
             }
         }
 
