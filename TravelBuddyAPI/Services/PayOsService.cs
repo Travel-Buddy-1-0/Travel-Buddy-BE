@@ -14,6 +14,10 @@ public class PayOsService
 
     public PayOsService(IOptions<PayOsSettings> options)
     {
+        if (options.Value == null)
+        {
+            throw new InvalidOperationException("PayOS configuration section is missing or invalid.");
+        }
         var settings = options.Value;
         _returnUrl = settings.ReturnUrl;
         _cancelUrl = settings.CancelUrl;
