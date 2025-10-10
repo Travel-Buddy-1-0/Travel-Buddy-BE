@@ -23,7 +23,6 @@ namespace BusinessObject.Entities
 
         public int? ParentCommentId { get; set; } 
 
-        public virtual Blog Blog { get; set; } = null!;
 
         public virtual User? User { get; set; }
 

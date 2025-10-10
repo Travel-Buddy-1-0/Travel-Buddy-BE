@@ -146,12 +146,6 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("updated_at");
             entity.Property(e => e.ParentCommentId).HasColumnName("parent_comment_id");
 
-            // Quan hệ với Blog
-            entity.HasOne(d => d.Blog).WithMany(p => p.Comments)
-                .HasForeignKey(d => d.BlogId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("comment_blog_blog_id_fkey");
-
             // Quan hệ với User
             entity.HasOne(d => d.User).WithMany(p => p.CommentBlogs)
                 .HasForeignKey(d => d.UserId)
