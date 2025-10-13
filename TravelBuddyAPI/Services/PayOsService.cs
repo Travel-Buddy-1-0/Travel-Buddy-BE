@@ -19,11 +19,20 @@ public class PayOsService
             throw new InvalidOperationException("PayOS configuration section is missing or invalid.");
         }
         var settings = options.Value;
+        _checksumKey = settings.ChecksumKey ??
+                       throw new InvalidOperationException("PayOS ChecksumKey is NULL. Check appsettings.json/user secrets.");
+
+        var clientId = settings.ClientId ??
+                       throw new InvalidOperationException("PayOS ClientId is NULL. Check appsettings.json/user secrets.");
+
+        var apiKey = settings.ApiKey ??
+                     throw new InvalidOperationException("PayOS ApiKey is NULL. Check appsettings.json/user secrets.");
+
         _returnUrl = settings.ReturnUrl;
         _cancelUrl = settings.CancelUrl;
-        _checksumKey = settings.ChecksumKey;
 
-        _payOS = new PayOS(settings.ClientId, settings.ApiKey, settings.ChecksumKey);
+        // Nếu ChecksumKey bị null, lỗi sẽ xảy ra ở dòng trên, ngăn việc khởi tạo PayOS với khóa rỗng.
+        _payOS = new PayOS(clientId, apiKey, _checksumKey);
     }
 
     public async Task<string> CreatePaymentLink(string description, int amount, long orderCode)
