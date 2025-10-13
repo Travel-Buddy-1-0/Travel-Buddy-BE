@@ -172,19 +172,24 @@ public class HotelService : IHotelService
         }).ToList();
     }
 
-    public async Task<List<ReviewDto1>> GetReviewsAsync(int hotelId, int? rating, int limit = 20, int offset = 0)
+    public async Task<List<ReviewDto>> GetReviewsAsync(int hotelId, int? rating, int limit = 20, int offset = 0)
     {
         var reviews = await _hotelRepository.GetReviewsByHotelAsync(hotelId, rating, limit, offset);
-        return reviews.Select(r => new ReviewDto1
+        return reviews.Select(r => new ReviewDto
         {
             ReviewId = r.ReviewId,
             UserId = r.UserId,
-            ReviewerName = r.User?.FullName ?? r.User?.Username,
+            TourId = r.TourId,
             HotelId = r.HotelId,
+            RestaurantId = r.RestaurantId,
             Rating = r.Rating,
             Comment = r.Comment,
             Image = r.Image,
-            ReviewDate = r.ReviewDate
+            ReviewDate = r.ReviewDate,
+            UserName = r.User?.FullName ?? r.User?.Username,
+            HotelName = r.Hotel?.Name,
+            RestaurantName = r.Restaurant?.Name,
+            TourName = r.Tour?.Title
         }).ToList();
     }
 

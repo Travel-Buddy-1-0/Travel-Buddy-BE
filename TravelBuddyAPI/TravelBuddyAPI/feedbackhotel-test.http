@@ -1,0 +1,113 @@
+### FeedbackHotel API Test Requests
+
+### Get all hotel feedbacks
+GET https://localhost:7000/FeedbackHotel
+Content-Type: application/json
+
+### Get hotel feedback by ID
+GET https://localhost:7000/FeedbackHotel/1
+Content-Type: application/json
+
+### Get hotel feedbacks by user ID
+GET https://localhost:7000/FeedbackHotel/user/1
+Content-Type: application/json
+
+### Get hotel feedbacks by hotel ID
+GET https://localhost:7000/FeedbackHotel/hotel/1
+Content-Type: application/json
+
+### Get hotel feedbacks with filters
+POST https://localhost:7000/FeedbackHotel/filter
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "hotelId": 1,
+  "rating": 5,
+  "fromDate": "2024-01-01T00:00:00Z",
+  "toDate": "2024-12-31T23:59:59Z",
+  "limit": 10,
+  "offset": 0
+}
+
+### Create new hotel feedback
+POST https://localhost:7000/FeedbackHotel
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "hotelId": 1,
+  "rating": 5,
+  "comment": "Excellent hotel with great service and beautiful rooms!"
+}
+
+### Update hotel feedback
+PUT https://localhost:7000/FeedbackHotel/1
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "comment": "Good hotel but room service could be better."
+}
+
+### Delete hotel feedback
+DELETE https://localhost:7000/FeedbackHotel/1
+Content-Type: application/json
+
+### Check if user can create feedback for hotel
+GET https://localhost:7000/FeedbackHotel/can-create?userId=1&hotelId=1
+Content-Type: application/json
+
+### Create feedback with different ratings
+POST https://localhost:7000/FeedbackHotel
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "hotelId": 2,
+  "rating": 3,
+  "comment": "Average hotel, nothing special."
+}
+
+### Create feedback with minimum rating
+POST https://localhost:7000/FeedbackHotel
+Content-Type: application/json
+
+{
+  "userId": 3,
+  "hotelId": 3,
+  "rating": 1,
+  "comment": "Terrible experience, would not recommend."
+}
+
+### Create feedback with maximum rating
+POST https://localhost:7000/FeedbackHotel
+Content-Type: application/json
+
+{
+  "userId": 4,
+  "hotelId": 4,
+  "rating": 5,
+  "comment": "Perfect! Amazing location, friendly staff, and luxurious amenities."
+}
+
+### Filter feedbacks by rating only
+POST https://localhost:7000/FeedbackHotel/filter
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "limit": 20,
+  "offset": 0
+}
+
+### Filter feedbacks by date range
+POST https://localhost:7000/FeedbackHotel/filter
+Content-Type: application/json
+
+{
+  "fromDate": "2024-01-01T00:00:00Z",
+  "toDate": "2024-01-31T23:59:59Z",
+  "limit": 50,
+  "offset": 0
+}

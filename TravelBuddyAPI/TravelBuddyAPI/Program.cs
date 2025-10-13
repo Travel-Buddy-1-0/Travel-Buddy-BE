@@ -41,6 +41,9 @@ namespace TravelBuddyAPI
             builder.Services.AddScoped<IPaymentHistoryService, PaymentHistoryService>();
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
+            builder.Services.AddScoped<IFeedbackHotelRepository, FeedbackHotelRepository>();
+            builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
             builder.Services.AddScoped<IHotelRepository, HotelRepository>();
             builder.Services.AddScoped<IRoomRepository, RoomRepository>();
@@ -48,6 +51,9 @@ namespace TravelBuddyAPI
             builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IUserActivityService, UserActivityService>();
+            builder.Services.AddScoped<IFeedbackHotelService, FeedbackHotelService>();
+            builder.Services.AddScoped<IReviewService, ReviewService>();
             builder.Services.AddScoped<IHotelService, HotelService>();
             builder.Services.AddScoped<IRoomService, RoomService>();
             builder.Services.AddScoped<ICommentBlogService, CommentBlogService>();

@@ -96,19 +96,6 @@ namespace BusinessObject.DTOs
         public string? Address { get; set; }
     }
 
-    public class ReviewDto
-    {
-        public int ReviewId { get; set; }
-        public int? UserId { get; set; }
-        public int? TourId { get; set; }
-        public int? HotelId { get; set; }
-        public int? RestaurantId { get; set; }
-        public int? Rating { get; set; }
-        public string? Comment { get; set; }
-        public string? Image { get; set; }
-        public DateTime? ReviewDate { get; set; }
-    }
-
     public class RoomDto1
     {
         public int RoomId { get; set; }
@@ -139,15 +126,6 @@ namespace BusinessObject.DTOs
         public int? Duration { get; set; }
         public decimal? Price { get; set; }
         public int? LocationId { get; set; }
-    }
-
-    public class UserActivityDto
-    {
-        public int ActivityId { get; set; }
-        public int? UserId { get; set; }
-        public string? ActivityType { get; set; }
-        public DateTime? ActivityDate { get; set; }
-        public string? Metadata { get; set; }
     }
 
     public class UserPreferenceDto
