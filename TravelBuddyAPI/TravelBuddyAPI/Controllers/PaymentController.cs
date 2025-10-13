@@ -64,7 +64,7 @@ namespace TravelBuddyAPI.Controllers
                 _logger.LogInformation($"PayOS Webhook received. Raw Body: {rawBody}");
                 //var signature = Request.Headers["x-signature"].FirstOrDefault();                
                 var payload = JsonSerializer.Deserialize<PayOsWebhookPayload>(rawBody);
-                _logger.LogInformation(payload);
+                //_logger.LogInformation(payload);
                 if (!_payOsService.VerifySignature(rawBody, payload.signature))
                 {
                     _logger.LogWarning("Webhook signature verification failed.");
