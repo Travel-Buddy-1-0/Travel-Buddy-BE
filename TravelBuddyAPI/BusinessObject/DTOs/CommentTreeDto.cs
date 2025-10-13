@@ -5,7 +5,7 @@ namespace BusinessObject.DTOs
     public class CommentTreeDto
     {
         public int CommentId { get; set; }
-        public int BlogId { get; set; }
+        public string BlogId { get; set; }
         public int? UserId { get; set; }
         public string Content { get; set; } = null!;
         public DateTime CreatedAt { get; set; }

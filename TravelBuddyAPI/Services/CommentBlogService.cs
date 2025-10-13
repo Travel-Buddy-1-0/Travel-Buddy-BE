@@ -70,7 +70,7 @@ namespace Services
             return new CommentTreeDto
             {
                 CommentId = c.CommentId,
-                BlogId = c.BlogId,
+                BlogId = c.BlogOnlineId,
                 UserId = c.UserId,
                 Content = c.Content,
                 CreatedAt = c.CreatedAt,

@@ -132,7 +132,6 @@ public partial class AppDbContext : DbContext
             entity.ToTable("comment_blog");
 
             entity.Property(e => e.CommentId).HasColumnName("comment_id");
-            entity.Property(e => e.BlogId).HasColumnName("blog_id");
             entity.Property(e => e.BlogOnlineId).HasColumnName("blog_online_id");
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
