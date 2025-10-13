@@ -80,27 +80,43 @@ namespace TravelBuddyAPI.Controllers
                     return Unauthorized();
                 }
                 var orderCode = payload.data.orderCode;
-                string payOsStatusCode = payload.data.code;
-                string statusForDb = (payOsStatusCode == "00") ? "PAID" : "FAILED";
-
                 var payment = await _paymentService.GetByOrderCodeAsync(orderCode);
+
                 if (payment == null)
                 {
                     _logger.LogWarning($"Payment record not found for order code: {orderCode}");
                     return NotFound();
                 }
-
-                payment.Status = statusForDb;
-                payment.UpdatedAt = DateTime.UtcNow;
-                await _paymentService.UpdateAsync(payment);
-                if (statusForDb == "PAID")
+                if (payment.Status == "PAID")
                 {
-                    await _userService.Deposit(payment.UserId, payment.Amount);
-                    _logger.LogInformation($"💰 User {payment.UserId} has successfully PAID for transaction {orderCode}.");
+                    _logger.LogInformation($"Webhook for order code {orderCode} has already been processed.");
+                    return Ok();
                 }
-                else
+
+                string payOsStatusCode = payload.data.code;
+                if (payOsStatusCode == "00")
                 {
-                    _logger.LogInformation($"Transaction {orderCode} for user {payment.UserId} has FAILED.");
+                    try
+                    {
+                        await _userService.Deposit(payment.UserId, payment.Amount);
+                        payment.Status = "PAID";
+                        payment.UpdatedAt = DateTime.UtcNow;
+                        await _paymentService.UpdateAsync(payment);
+
+                        _logger.LogInformation($"💰 User {payment.UserId} has successfully PAID for transaction {orderCode}. Both deposit and status update were successful.");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"CRITICAL: Deposit failed for user {payment.UserId} with order code {orderCode}. The payment status remains PENDING.");
+                        return Ok(new { error = 1, message = "Deposit failed but webhook acknowledged." });
+                    }
+                }
+                else 
+                {
+                    payment.Status = "FAILED";
+                    payment.UpdatedAt = DateTime.UtcNow;
+                    await _paymentService.UpdateAsync(payment);
+                    _logger.LogInformation($"Transaction {orderCode} for user {payment.UserId} has FAILED as per PayOS webhook.");
                 }
                 return Ok();
             }
