@@ -74,12 +74,19 @@ public class PayOsService
             Console.WriteLine($"Error confirming webhook: {ex.Message}");
         }
     }
-    public bool VerifySignature(string rawBody, string signature)
+    public bool VerifyWebhookSignature(WebhookType webhookBody)
     {
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_checksumKey));
-        var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(rawBody));
-        var computedSignature = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-
-        return computedSignature == signature.ToLower();
+        try
+        {
+            // Sử dụng phương thức có sẵn của thư viện PayOS
+            _payOS.verifyPaymentWebhookData(webhookBody);
+            return true; // Nếu không có exception, chữ ký hợp lệ
+        }
+        catch (Exception ex)
+        {
+            // Thư viện sẽ ném ra Exception nếu chữ ký không hợp lệ
+            Console.WriteLine($"Signature verification failed: {ex.Message}");
+            return false;
+        }
     }
 }
