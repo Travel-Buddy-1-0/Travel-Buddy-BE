@@ -36,9 +36,9 @@ namespace Repositories
         public async Task<IEnumerable<PaymentHistory>> GetByUserIdAsync(int userId)
         {
             return await _context.PaymentHistories
-                                 .Where(p => p.UserId == userId)
-                                 .Include(p => p.User)
-                                 .ToListAsync();
+                             .Where(p => p.UserId == userId)
+                             .OrderByDescending(p => p.CreatedAt) // Sắp xếp giao dịch mới nhất lên đầu
+                             .ToListAsync();
         }
 
         public async Task AddAsync(PaymentHistory paymentHistory)

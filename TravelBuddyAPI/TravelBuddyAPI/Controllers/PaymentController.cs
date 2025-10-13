@@ -52,7 +52,26 @@ namespace TravelBuddyAPI.Controllers
 
             return Ok(new { paymentUrl = url });
         }
+        [HttpGet("history/{userId}")]
+        public async Task<IActionResult> GetPaymentHistoryByUserId(int userId)
+        {
 
+            if (userId <= 0)
+            {
+                return BadRequest(new { message = "User ID không hợp lệ." }); // Trả về 400 Bad Request
+            }
+
+            try
+            {
+                var history = await _paymentService.GetByUserIdAsync(userId);
+                return Ok(history);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Đã xảy ra lỗi khi lấy lịch sử thanh toán cho User ID {UserId}", userId);
+                return StatusCode(500, new { message = "Đã có lỗi nội bộ xảy ra." });
+            }
+        }
 
         [HttpPost("webhook")]
         public async Task<IActionResult> PayOsWebhook()
@@ -62,11 +81,10 @@ namespace TravelBuddyAPI.Controllers
                 using var reader = new StreamReader(Request.Body);
                 var rawBody = await reader.ReadToEndAsync();
 
-                _logger.LogInformation($"PayOS Webhook received. Raw Body: {rawBody}");
-                // var signature = Request.Headers["x-signature"].FirstOrDefault();                
+                _logger.LogInformation($"PayOS Webhook received. Raw Body: {rawBody}");            
                 var payload = JsonSerializer.Deserialize<WebhookType>(rawBody, new JsonSerializerOptions
                 {
-                    PropertyNameCaseInsensitive = true // Giúp khớp với các thuộc tính camelCase
+                    PropertyNameCaseInsensitive = true 
                 });
                 if (payload == null || payload.data == null)
                 {
