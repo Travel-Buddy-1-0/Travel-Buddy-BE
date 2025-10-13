@@ -3,6 +3,7 @@ using BusinessObject.DTOs;
 using BusinessObject.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Net.payOS.Types;
 using Services;
 using System.Text.Json;
 
@@ -62,29 +63,45 @@ namespace TravelBuddyAPI.Controllers
                 var rawBody = await reader.ReadToEndAsync();
 
                 _logger.LogInformation($"PayOS Webhook received. Raw Body: {rawBody}");
-                //var signature = Request.Headers["x-signature"].FirstOrDefault();                
-                var payload = JsonSerializer.Deserialize<PayOsWebhookPayload>(rawBody);
-                //_logger.LogInformation(payload);
-                if (!_payOsService.VerifySignature(rawBody, payload.signature))
+                // var signature = Request.Headers["x-signature"].FirstOrDefault();                
+                var payload = JsonSerializer.Deserialize<WebhookType>(rawBody, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true // Giúp khớp với các thuộc tính camelCase
+                });
+                if (payload == null || payload.data == null)
+                {
+                    _logger.LogWarning("Webhook payload is invalid or empty.");
+                    return BadRequest("Invalid payload.");
+                }
+
+                if (!_payOsService.VerifyWebhookSignature(payload))
                 {
                     _logger.LogWarning("Webhook signature verification failed.");
                     return Unauthorized();
                 }
                 var orderCode = payload.data.orderCode;
                 string payOsStatusCode = payload.data.code;
-                string statusForDb = (payOsStatusCode == "00") ? "PAID" : "FAILED"; 
+                string statusForDb = (payOsStatusCode == "00") ? "PAID" : "FAILED";
 
                 var payment = await _paymentService.GetByOrderCodeAsync(orderCode);
-                if (payment == null) return NotFound();
+                if (payment == null)
+                {
+                    _logger.LogWarning($"Payment record not found for order code: {orderCode}");
+                    return NotFound();
+                }
 
                 payment.Status = statusForDb;
                 payment.UpdatedAt = DateTime.UtcNow;
                 await _paymentService.UpdateAsync(payment);
-
-                await _userService.Deposit(payment.UserId, payment.Amount);
-
-                _logger.LogInformation($"💰 User {payment.UserId} đã {payment.Status} giao dịch {orderCode} thành công.");
-
+                if (statusForDb == "PAID")
+                {
+                    await _userService.Deposit(payment.UserId, payment.Amount);
+                    _logger.LogInformation($"💰 User {payment.UserId} has successfully PAID for transaction {orderCode}.");
+                }
+                else
+                {
+                    _logger.LogInformation($"Transaction {orderCode} for user {payment.UserId} has FAILED.");
+                }
                 return Ok();
             }
             catch (Exception ex)
