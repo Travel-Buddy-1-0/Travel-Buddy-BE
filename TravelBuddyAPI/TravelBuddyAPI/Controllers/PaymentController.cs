@@ -56,53 +56,40 @@ namespace TravelBuddyAPI.Controllers
         [HttpPost("webhook")]
         public async Task<IActionResult> PayOsWebhook()
         {
-            // Bắt đầu khối try-catch để đảm bảo không bị lỗi 500
             try
             {
-                // 1. Đọc Raw Body
                 using var reader = new StreamReader(Request.Body);
                 var rawBody = await reader.ReadToEndAsync();
 
                 _logger.LogInformation($"PayOS Webhook received. Raw Body: {rawBody}");
-
-                // 2. Xác thực Signature
-                var signature = Request.Headers["x-signature"].FirstOrDefault();
-                if (!_payOsService.VerifySignature(rawBody, signature))
+                //var signature = Request.Headers["x-signature"].FirstOrDefault();                
+                var payload = JsonSerializer.Deserialize<PayOsWebhookPayload>(rawBody);
+                _logger.LogInformation(payload);
+                if (!_payOsService.VerifySignature(rawBody, payload.signature))
                 {
                     _logger.LogWarning("Webhook signature verification failed.");
-                    return Unauthorized(); // Trả về 401 nếu xác thực thất bại
+                    return Unauthorized();
                 }
-
-                // 3. Deserialization và Logic nghiệp vụ
-                var payload = JsonSerializer.Deserialize<PayOsWebhookPayload>(rawBody);
                 var orderCode = payload.data.orderCode;
                 string payOsStatusCode = payload.data.code;
-                string statusForDb = (payOsStatusCode == "00") ? "PAID" : "FAILED"; // Cập nhật logic này theo tài liệu PayOS
+                string statusForDb = (payOsStatusCode == "00") ? "PAID" : "FAILED"; 
 
-                // ✅ Tìm bản ghi trong DB
                 var payment = await _paymentService.GetByOrderCodeAsync(orderCode);
                 if (payment == null) return NotFound();
 
-                // ✅ Cập nhật trạng thái
                 payment.Status = statusForDb;
                 payment.UpdatedAt = DateTime.UtcNow;
                 await _paymentService.UpdateAsync(payment);
 
-                // Cập nhật tiền (Nếu lỗi ở đây, bạn sẽ bị 500)
                 await _userService.Deposit(payment.UserId, payment.Amount);
 
                 _logger.LogInformation($"💰 User {payment.UserId} đã {payment.Status} giao dịch {orderCode} thành công.");
 
-                // 4. Trả về 200 OK
                 return Ok();
             }
             catch (Exception ex)
             {
-                // Ghi log chi tiết lỗi 500
                 _logger.LogError(ex, "LỖI NỘI BỘ (500) khi xử lý PayOS Webhook.");
-
-                // QUAN TRỌNG: Trả về 200 OK để PayOS ngừng thử lại, 
-                // sau đó bạn có thể kiểm tra Log để khắc phục lỗi.
                 return Ok(new { error = 1, message = "Internal error, but webhook acknowledged. /n" + ex });
             }
         }
