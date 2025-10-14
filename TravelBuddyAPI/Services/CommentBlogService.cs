@@ -67,12 +67,13 @@ namespace Services
 
         private static CommentTreeDto MapToDto(CommentBlog c)
         {
-            return new CommentTreeDto
+             return new CommentTreeDto
             {
                 CommentId = c.CommentId,
                 BlogId = c.BlogOnlineId,
                 UserId = c.UserId,
                 Content = c.Content,
+                UserName = c.User.FullName,
                 CreatedAt = c.CreatedAt,
                 UpdatedAt = c.UpdatedAt,
                 ParentCommentId = c.ParentCommentId,
