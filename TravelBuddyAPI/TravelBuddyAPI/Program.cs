@@ -49,6 +49,7 @@ namespace TravelBuddyAPI
             builder.Services.AddScoped<IRoomRepository, RoomRepository>();
             builder.Services.AddScoped<ICommentBlogRepository, CommentBlogRepository>();
             builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
+            builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IUserActivityService, UserActivityService>();

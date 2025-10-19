@@ -19,8 +19,8 @@ public class HotelBookingRequestDto
     public string? Country { get; set; }
     public string? Phone { get; set; }
     public string? Note { get; set; }
-
-    public int? TypePayment { get; set; }// 1 laf thanh toan tai noi 2 la  vi
+    public int? TypePayment { get; set; } //0 là chưa thanh toán 1 laf banking 2 laf vis
+    public string? VoucherCode { get; set; }
 }
 
 

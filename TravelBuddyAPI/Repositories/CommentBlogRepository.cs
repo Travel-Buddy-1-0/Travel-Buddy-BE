@@ -27,7 +27,7 @@ namespace Repositories
 
         public async Task<List<CommentBlog>> GetByBlogIdAsync(string blogId)
         {
-            return await _context.CommentBlogs
+            return await _context.CommentBlogs.Include(x=>x.User)
                 .Where(c => c.BlogOnlineId == blogId)
                 .ToListAsync();
         }

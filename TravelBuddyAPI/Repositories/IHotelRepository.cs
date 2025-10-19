@@ -15,7 +15,6 @@ namespace Repositories
         Task<List<Bookingdetail>> GetBookingHistoryAsync(int userId, DateOnly? bookingDate);
 
         Task<int> ChangeStatusBookingAsync(int bookingId, int status);
-
     }
 }
 

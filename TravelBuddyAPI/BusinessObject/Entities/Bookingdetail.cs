@@ -36,6 +36,12 @@ public partial class Bookingdetail
     public string? Phone { get; set; }
     public string? Note { get; set; }
 
+    public decimal OriginalPrice { get; set; }
+
+    public decimal DiscountAmount { get; set; }
+
+    public string? VoucherCode { get; set; }
+
     public virtual Hotel? Hotel { get; set; }
 
     public virtual Restaurant? Restaurant { get; set; }
