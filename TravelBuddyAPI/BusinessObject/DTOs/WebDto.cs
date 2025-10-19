@@ -1,7 +1,16 @@
-﻿using System.Text.Json.Nodes;
+﻿using BusinessObject.Entities;
+using System.Text.Json.Nodes;
 
 namespace BusinessObject.DTOs
 {
+    public class VoucherDto
+    {
+        public string Code { get; set; }
+        public string Description { get; set; }
+        public DiscountType DiscountType { get; set; }
+        public decimal DiscountValue { get; set; }
+        public decimal MinBookingAmount { get; set; }
+    }
     public class UserDto
     {
         public int UserId { get; set; }

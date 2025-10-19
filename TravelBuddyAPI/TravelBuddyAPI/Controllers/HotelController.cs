@@ -46,6 +46,12 @@ namespace TravelBuddyAPI.Controllers
             var data = await _hotelService.GetDetailAsync(id);
             return Ok(data);
         }
+        [HttpGet("vouchers")]
+        public async Task<IActionResult> GetActiveVouchers()
+        {
+            var data = await _hotelService.GetActiveVouchersAsync();
+            return Ok(data);
+        }
 
         // -1 api nhận vào thông tin khách hàng + ... + hotel id được đặt
         [HttpPost("book")]
