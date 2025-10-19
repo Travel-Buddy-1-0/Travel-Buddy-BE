@@ -203,6 +203,7 @@ public class HotelService : IHotelService
             BookingId = b.BookingId,
             UserId = b.UserId ?? 0,
             HotelId = b.HotelId,
+            RoomId= b.RoomId,
             BookingDate = b.BookingDate ?? DateTime.UtcNow,
             CheckInDate = b.CheckInDate,
             CheckOutDate = b.CheckOutDate,
