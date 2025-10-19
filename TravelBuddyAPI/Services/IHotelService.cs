@@ -12,6 +12,8 @@ public interface IHotelService
     Task<List<BookingHistoryDto>> GetBookingHistoryAsync(int userId, DateOnly? bookingDate);
     Task<List<ReviewDto>> GetReviewsAsync(int hotelId, int? rating, int limit = 20, int offset = 0);
     Task<int> ChangeStatusBookingAsync(int bookingId, int status);
+
+    Task<List<VoucherDto>> GetActiveVouchersAsync();
 }
 
 

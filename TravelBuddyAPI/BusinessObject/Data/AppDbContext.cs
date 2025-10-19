@@ -22,6 +22,7 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Conversation> Conversations { get; set; }
 
+    public virtual DbSet<Voucher> Vouchers { get; set; }
     public virtual DbSet<PaymentHistory> PaymentHistories { get; set; }
 
     public virtual DbSet<Group> Groups { get; set; }
@@ -213,6 +214,28 @@ public partial class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("blog_restaurant_id_fkey");
         });
+        modelBuilder.Entity<Voucher>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("vouchers_pkey");
+            entity.ToTable("vouchers");
+
+            // Map từng thuộc tính C# (PascalCase) sang cột DB (snake_case)
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code");
+            entity.Property(e => e.Description).HasColumnName("description");
+
+            entity.Property(e => e.DiscountType)
+                  .HasColumnName("discount_type")
+                  .HasConversion<int>(); // Lưu Enum dưới dạng số nguyên
+
+            entity.Property(e => e.DiscountValue).HasColumnName("discount_value");
+            entity.Property(e => e.MinBookingAmount).HasColumnName("min_booking_amount");
+            entity.Property(e => e.StartDate).HasColumnName("start_date");
+            entity.Property(e => e.EndDate).HasColumnName("end_date");
+            entity.Property(e => e.MaxUsageCount).HasColumnName("max_usage_count");
+            entity.Property(e => e.CurrentUsageCount).HasColumnName("current_usage_count");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+        });
 
         modelBuilder.Entity<Bookingdetail>(entity =>
         {
@@ -285,6 +308,9 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.Note)
                 .HasColumnName("note");
+            entity.Property(e => e.OriginalPrice).HasColumnName("original_price");
+            entity.Property(e => e.DiscountAmount).HasColumnName("discount_amount");
+            entity.Property(e => e.VoucherCode).HasColumnName("voucher_code");
         });
 
         modelBuilder.Entity<Conversation>(entity =>
