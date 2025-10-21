@@ -311,7 +311,12 @@ public class HotelService : IHotelService
                 Description = v.Description,
                 DiscountType = v.DiscountType,
                 DiscountValue = v.DiscountValue,
-                MinBookingAmount = v.MinBookingAmount
+                MinBookingAmount = v.MinBookingAmount,
+                StartDate = v.StartDate,
+                EndDate = v.EndDate,
+                MaxUsageCount = v.MaxUsageCount,
+                CurrentUsageCount = v.CurrentUsageCount,
+                IsActive = v.IsActive
             }).ToList();
         }
         catch (Exception ex)
@@ -321,6 +326,32 @@ public class HotelService : IHotelService
             System.Diagnostics.Debug.WriteLine(ex.ToString());
             throw; // Ném lỗi lại để API báo lỗi 500
         }
+    }
+    public async Task<VoucherDto?> GetVoucherByCodeAsync(string code)
+    {
+        // 1. Gọi repository để tìm voucher
+        var voucher = await _voucherRepository.GetByCodeAsync(code);
+
+        // 2. Nếu không tìm thấy, trả về null
+        if (voucher == null)
+        {
+            return null;
+        }
+
+        // 3. Nếu tìm thấy, map sang DTO để trả về
+        return new VoucherDto
+        {
+            Code = voucher.Code,
+            Description = voucher.Description,
+            DiscountType = voucher.DiscountType,
+            DiscountValue = voucher.DiscountValue,
+            MinBookingAmount = voucher.MinBookingAmount,
+            StartDate = voucher.StartDate,
+            EndDate = voucher.EndDate,
+            MaxUsageCount = voucher.MaxUsageCount,
+            CurrentUsageCount = voucher.CurrentUsageCount,
+            IsActive = voucher.IsActive
+        };
     }
 }
 
