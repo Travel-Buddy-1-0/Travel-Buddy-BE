@@ -102,7 +102,7 @@ public class HotelService : IHotelService
 
             // Validation...
             if (appliedVoucher == null) throw new Exception("Voucher không tồn tại.");
-            if (!appliedVoucher.IsActive) throw new Exception("Voucher đã bị vô hiệu hóa."); // Dùng C# PascalCase
+            //if (!appliedVoucher.IsActive) throw new Exception("Voucher đã bị vô hiệu hóa."); // Dùng C# PascalCase
             if (DateTime.UtcNow > appliedVoucher.EndDate) throw new Exception("Voucher đã hết hạn.");
             if (appliedVoucher.CurrentUsageCount >= appliedVoucher.MaxUsageCount) throw new Exception("Voucher đã hết lượt sử dụng.");
             if (originalPrice < appliedVoucher.MinBookingAmount)
@@ -183,7 +183,7 @@ public class HotelService : IHotelService
             paymentHistory.CreatedAt = DateTime.Now;
             var random = new Random();
             paymentHistory.TransactionCode = ((long)random.Next() << 32) | (long)random.Next();
-            _paymentHistoryRepository.AddAsync(paymentHistory);
+            await _paymentHistoryRepository.AddAsync(paymentHistory);
 
             await transaction.CommitAsync(); // Lưu tất cả thay đổi
             return created.BookingId;
@@ -281,29 +281,8 @@ public class HotelService : IHotelService
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("--- 1. Đang vào HotelService.GetActiveVouchersAsync ---");
-
-            // 1. KIỂM TRA LỖI DI (Dependency Injection)
-            if (_voucherRepository == null)
-            {
-                System.Diagnostics.Debug.WriteLine("--- LỖI NGHIÊM TRỌNG: _voucherRepository BỊ NULL! ---");
-                System.Diagnostics.Debug.WriteLine("--- KIỂM TRA DI TRONG Program.cs. Bạn đã thêm builder.Services.AddScoped<IVoucherRepository, VoucherRepository>(); CHƯA? ---");
-                throw new Exception("_voucherRepository was null. Check DI in Program.cs");
-            }
-
-            System.Diagnostics.Debug.WriteLine("--- 2. _voucherRepository không null. Đang gọi GetActiveVouchersAsync... ---");
             var vouchers = await _voucherRepository.GetActiveVouchersAsync();
-            System.Diagnostics.Debug.WriteLine("--- 3. Đã gọi xong GetActiveVouchersAsync ---");
 
-            // 2. KIỂM TRA KẾT QUẢ TRẢ VỀ TỪ REPOSITORY
-            if (vouchers == null)
-            {
-                System.Diagnostics.Debug.WriteLine("--- LỖI: _voucherRepository.GetActiveVouchersAsync() đã trả về NULL! ---");
-                System.Diagnostics.Debug.WriteLine("--- Lỗi này nằm trong VoucherRepository.cs. ToListAsync() không thể trả về null trừ khi _context hoặc _context.Vouchers bị null. ---");
-                throw new Exception("Voucher list returned from repository was null.");
-            }
-
-            System.Diagnostics.Debug.WriteLine($"--- 4. Lấy được {vouchers.Count} vouchers. Đang map sang DTO... ---");
 
             return vouchers.Select(v => new VoucherDto
             {
