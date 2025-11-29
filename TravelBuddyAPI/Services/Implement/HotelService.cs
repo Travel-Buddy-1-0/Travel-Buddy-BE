@@ -1,13 +1,12 @@
-﻿using BusinessLogic.Exceptions;
+using BusinessLogic.Exceptions;
 using BusinessObject.Data;
 using BusinessObject.DTOs;
 using BusinessObject.Entities;
 using Microsoft.EntityFrameworkCore;
-using Repositories.Interfaces;
-using Services.Interfaces;
+using Repositories;
 using System.IO.Pipes;
 
-namespace Services.Implement;
+namespace BusinessLogic.Services;
 
 public class HotelService : IHotelService
 {
@@ -177,13 +176,13 @@ public class HotelService : IHotelService
 
             PaymentHistory paymentHistory = new PaymentHistory();
             paymentHistory.UserId = userId;
-            paymentHistory.Amount = finalPrice;
+            paymentHistory.Amount = (decimal)finalPrice;
             paymentHistory.PaymentMethod = "Wallet";
             paymentHistory.Status = "Done";
             paymentHistory.Description = "Thanh toán đơn hàng " +created.BookingId +" bằng ví thành công";
             paymentHistory.CreatedAt = DateTime.Now;
             var random = new Random();
-            paymentHistory.TransactionCode = (long)random.Next() << 32 | (long)random.Next();
+            paymentHistory.TransactionCode = ((long)random.Next() << 32) | (long)random.Next();
             await _paymentHistoryRepository.AddAsync(paymentHistory);
 
             await transaction.CommitAsync(); // Lưu tất cả thay đổi
@@ -204,6 +203,7 @@ public class HotelService : IHotelService
             BookingId = b.BookingId,
             UserId = b.UserId ?? 0,
             HotelId = b.HotelId,
+            RoomId= b.RoomId,
             BookingDate = b.BookingDate ?? DateTime.UtcNow,
             CheckInDate = b.CheckInDate,
             CheckOutDate = b.CheckOutDate,
@@ -333,5 +333,4 @@ public class HotelService : IHotelService
         };
     }
 }
-
 
