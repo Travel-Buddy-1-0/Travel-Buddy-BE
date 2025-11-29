@@ -1,6 +1,6 @@
-using BusinessLogic.Services;
 using BusinessObject.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Services.Interfaces;
 
 namespace TravelBuddyAPI.Controllers
 {

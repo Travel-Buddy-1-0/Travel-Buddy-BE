@@ -1,11 +1,11 @@
 using BusinessObject.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using Services;
+using Services.Interfaces;
 
 namespace TravelBuddyAPI.Controllers
 {
-    [ApiController]
-    [Route("api")] // grouping routes
+    //[ApiController]
+    //[Route("api")] // grouping routes
     public class CommentBlogController : ControllerBase
     {
         private readonly ICommentBlogService _service;

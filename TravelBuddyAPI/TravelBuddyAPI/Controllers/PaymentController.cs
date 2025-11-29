@@ -1,10 +1,9 @@
-﻿using BusinessLogic.Services;
-using BusinessObject.DTOs;
+﻿using BusinessObject.DTOs;
 using BusinessObject.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Net.payOS.Types;
-using Services;
+using Services.Interfaces;
 using System.Text.Json;
 
 
