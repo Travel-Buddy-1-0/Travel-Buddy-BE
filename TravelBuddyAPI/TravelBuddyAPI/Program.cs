@@ -1,3 +1,4 @@
+using BusinessLogic.Services;
 using BusinessObject.Data;
 using BusinessObject.DTOs;
 using Microsoft.EntityFrameworkCore;
@@ -117,7 +118,19 @@ namespace TravelBuddyAPI
 
             // --- Swagger ---
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.DocInclusionPredicate((docName, apiDesc) =>
+                {
+                    if (!apiDesc.ActionDescriptor.RouteValues.TryGetValue("controller", out var controllerName))
+                    {
+                        return false;
+                    }
+                    var allowList = new[] { "Cvs", "CvTemplates" };
+
+                    return allowList.Contains(controllerName);
+                });
+            });
 
             var app = builder.Build();
 
