@@ -1,0 +1,124 @@
+{
+  "layout_json": {
+    "sectionsOrder": [ "profile", "summary", "experience", "skills", "projects", "languages", "education", "interests" ],
+    "layout": {
+      "type": "one-column"
+    }
+  },
+  "style_json": {
+    "global": {
+      "fontFamily": "Inter, sans-serif",
+      "fontSize": "14px",
+      "lineHeight": "1.6",
+      "color": "#222222",
+      "background": "#ffffff",
+      "padding": "40px"
+    },
+    "section": {
+      "title": {
+        "fontSize": "18px",
+        "fontWeight": "700",
+        "textTransform": "uppercase",
+        "marginBottom": "12px",
+        "color": "#1e90ff",
+        "borderBottom": "2px solid #1e90ff",
+        "paddingBottom": "4px"
+      },
+      "content": {
+        "marginBottom": "24px",
+        "color": "#333333"
+      }
+    },
+    "avatar": {
+      "width": "150px",
+      "height": "150px",
+      "borderRadius": "50%",
+      "objectFit": "cover",
+      "border": "4px solid #1e90ff",
+      "margin": "0 auto 20px auto",
+      "display": "block"
+    },
+    "components": {
+      "skill-tag": {
+        "background": "#e6f0ff",
+        "color": "#0055cc",
+        "padding": "4px 8px",
+        "borderRadius": "4px",
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "marginRight": "6px",
+        "marginBottom": "6px",
+        "display": "inline-block"
+      },
+      "section-wrapper": {
+        "padding": "8px 0"
+      }
+    }
+  },
+  "data_json": {
+    "profile": {
+      "avatar": "https://images.unsplash.com/photo-1603415526960-f0b6f58d5f5f",
+      "name": "LE THI B",
+      "email": "lethib@example.com",
+      "phone": "+84 987 654 321"
+    },
+    "summary": "Senior full-stack developer with 7+ years experience building scalable web apps with React, Node.js, .NET, and cloud services. Passionate about mentoring and building clean, maintainable code.",
+    "experience": [
+      {
+        "position": "Senior Full-Stack Developer",
+        "company": "TechNova Solutions",
+        "time": "2020 - Present",
+        "desc": "Lead dev team on enterprise projects. Designed microservices and CI/CD pipelines. Reduced app load time by 40%."
+      },
+      {
+        "position": "Front-End Lead",
+        "company": "Creative Minds",
+        "time": "2017 - 2020",
+        "desc": "Oversaw front-end dev using React & TypeScript. Improved accessibility and UX scores. Mentored junior devs."
+      },
+      {
+        "position": "Web Developer",
+        "company": "Startup Hub",
+        "time": "2014 - 2017",
+        "desc": "Built full-stack web applications with PHP, Laravel, and Vue.js."
+      }
+    ],
+    "projects": [
+      {
+        "name": "E-Commerce Platform",
+        "tech": [ "React", "Node.js", "MongoDB", "AWS" ],
+        "desc": "Developed multi-tenant e-commerce platform with payment integration."
+      },
+      {
+        "name": "Task Management SaaS",
+        "tech": [ "Vue", "Firebase", "Tailwind CSS" ],
+        "desc": "Created task management SaaS with real-time collaboration and notifications."
+      },
+      {
+        "name": "Portfolio Builder",
+        "tech": [ "Next.js", "GraphQL", "TypeScript" ],
+        "desc": "Web app to generate customizable portfolios dynamically."
+      },
+      {
+        "name": "Internal Dashboard",
+        "tech": [ "React", "D3.js", "REST API" ],
+        "desc": "Visualized analytics and KPIs for enterprise clients."
+      }
+    ],
+    "education": [
+      {
+        "school": "Hanoi University of Science and Technology",
+        "year": "2010 - 2014",
+        "degree": "Bachelor of Information Technology"
+      },
+      {
+        "school": "Coursera / Udemy Online Courses",
+        "year": "2015 - 2023",
+        "degree": "Advanced React, Node.js, Cloud Architecture"
+      }
+    ],
+    "skills": [ "React", "Vue", "Node.js", ".NET", "TypeScript", "GraphQL", "MongoDB", "PostgreSQL", "AWS", "Docker", "CI/CD", "Tailwind CSS", "REST API", "Git" ],
+    "interests": [ "Open-source contribution", "Traveling", "Photography", "Cooking", "Tech Blogging", "AI & Machine Learning" ],
+    "languages": [ "Vietnamese (Native)", "English (IELTS 8.0)", "Japanese (N3)" ]
+  }
+}
