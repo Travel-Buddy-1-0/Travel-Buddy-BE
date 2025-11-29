@@ -13,6 +13,16 @@
   <ItemGroup>
     <ProjectReference Include="..\BusinessObject\BusinessObject.csproj" />
     <ProjectReference Include="..\Repositories\Repositories.csproj" />
+	  <PackageReference Include="PdfPig" Version="0.1.12" />
+	  <PackageReference Include="PuppeteerSharp" Version="20.2.4" />
+
+	  <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+	  <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
+
+
+
+	  <PackageReference Include="QuestPDF" Version="2025.7.4" />
+	  <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
   </ItemGroup>
 
 </Project>

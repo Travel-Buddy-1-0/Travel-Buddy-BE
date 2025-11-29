@@ -6,7 +6,7 @@ using Repositories.Implements;
 using Repositories.Interfaces;
 using Services.Implement;
 using Services.Interfaces;
-using Services.NewFolder;
+
 using TravelBuddyAPI.Models;
 
 namespace TravelBuddyAPI
@@ -30,12 +30,7 @@ namespace TravelBuddyAPI
 
             //}
 
-            builder.Services.AddHttpClient<IFileParserService, ExternalFileParserService>(client =>
-            {
-                // URL của Python/Node Service
-                // Nếu chạy Docker cùng nhau thì dùng tên container, ví dụ: http://parser-service:8001
-                client.BaseAddress = new Uri("http://localhost:8001");
-            });
+   
             // Add Supabase for authentication only
             // --- Supabase config ---
             var url = builder.Configuration["Supabase:Url"];
@@ -55,34 +50,32 @@ namespace TravelBuddyAPI
 
             // --- Services ---
             builder.Services.Configure<PayOsSettings>(builder.Configuration.GetSection("PayOS"));
-            builder.Services.AddSingleton<PayOsService>();
+         
             builder.Services.AddSingleton(provider => new Supabase.Client(url, key, options));
-            builder.Services.AddHttpClient<IFileParserService, ExternalFileParserService>(client =>
-            {
-                client.BaseAddress = new Uri("http://127.0.0.1:8001");
-            });
-            builder.Services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
-            builder.Services.AddScoped<IPaymentHistoryService, PaymentHistoryService>();
+      
+  
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
-            builder.Services.AddScoped<IFeedbackHotelRepository, FeedbackHotelRepository>();
-            builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
-
-            builder.Services.AddScoped<IHotelRepository, HotelRepository>();
-            builder.Services.AddScoped<IRoomRepository, RoomRepository>();
-            builder.Services.AddScoped<ICommentBlogRepository, CommentBlogRepository>();
-            builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
-            builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
+ 
 
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IUserActivityService, UserActivityService>();
-            builder.Services.AddScoped<IFeedbackHotelService, FeedbackHotelService>();
-            builder.Services.AddScoped<IReviewService, ReviewService>();
-            builder.Services.AddScoped<IHotelService, HotelService>();
-            builder.Services.AddScoped<IRoomService, RoomService>();
-            builder.Services.AddScoped<ICommentBlogService, CommentBlogService>();
-            builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+            // HttpClient cho SupabaseService
+            builder.Services.AddHttpClient<SupabaseService>();
+            builder.Services.AddHttpClient<GeminiService>();
+            // RedisService singleton
+            builder.Services.AddSingleton<RedisService>();
+            builder.Services.AddScoped<FileParserService>();
+            builder.Services.AddScoped<PuppeteerSharpPDFServices>();
+            // JobQueueService singleton
+
+
+            builder.Services.AddScoped<QuestPdfService>();
+            // Đăng ký Service của bạn
+
+            builder.Services.AddSingleton<JobQueueService>();
+
+            // Worker background
+            builder.Services.AddHostedService<CvWorker>();
             builder.Services.AddControllers();
 
             // --- CORS ---
