@@ -14,6 +14,8 @@ public interface IHotelService
     Task<int> ChangeStatusBookingAsync(int bookingId, int status);
 
     Task<List<VoucherDto>> GetActiveVouchersAsync();
+
+    Task<VoucherDto?> GetVoucherByCodeAsync(string code);
 }
 
 
