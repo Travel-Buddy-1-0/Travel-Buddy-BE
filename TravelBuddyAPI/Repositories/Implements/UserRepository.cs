@@ -2,6 +2,11 @@
 using BusinessObject.Entities;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Repositories.Implements
 {
@@ -64,7 +69,7 @@ namespace Repositories.Implements
         {
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == email);
-            
+
             if (user != null)
             {
                 user.Username = updatedUser.Username;
@@ -75,10 +80,10 @@ namespace Repositories.Implements
                 user.Photo = updatedUser.Photo;
                 user.Role = updatedUser.Role;
                 user.Sex = updatedUser.Sex;
-                
+
                 await _context.SaveChangesAsync();
             }
-            
+
             return user ?? new User();
         }
     }
