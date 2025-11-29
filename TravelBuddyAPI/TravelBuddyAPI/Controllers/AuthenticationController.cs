@@ -1,11 +1,19 @@
 ﻿using BusinessLogic.Exceptions;
-using BusinessLogic.Services;
+using BusinessObject.Data;
 using BusinessObject.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using Services.Interfaces;
 using Supabase;
 using Supabase.Gotrue;
 using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Security.Claims;
+using System.Text;
+
 namespace TravelBuddyAPI.Controllers
 {
     [ApiController]
@@ -13,13 +21,18 @@ namespace TravelBuddyAPI.Controllers
     public class AuthenticationController : ControllerBase
     {
         private readonly Supabase.Client _client;
+        private readonly AppDbContext _context;        
+        private readonly IConfiguration _configuration;
         private readonly ILogger<AuthenticationController> _logger;
         private readonly IUserService _userService;
-        public AuthenticationController(Supabase.Client client, ILogger<AuthenticationController> logger, IUserService userService)
+        public AuthenticationController(Supabase.Client client, ILogger<AuthenticationController> logger, IUserService userService, AppDbContext context,               // <--- Thêm tham số này
+        IConfiguration configuration)
         {
             _client = client;
             _logger = logger;
             _userService = userService;
+            _context = context;
+            _configuration = configuration;
         }
         [HttpPost("register")]
         public async Task<IResult> Register([FromBody] RegisterRequestDto request)
@@ -134,16 +147,24 @@ namespace TravelBuddyAPI.Controllers
                 {
                     return Results.BadRequest("Unable to login");
                 }
-                //var user = await _client.Auth.GetUser(session.AccessToken);
-                var userResponse = new UserResponseDto
+                var internalUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == request.Email);
+
+                if (internalUser == null)
                 {
-                    AccessToken = session.AccessToken,
-                    RefreshToken = session.RefreshToken,
-                    ExpiresIn = session.ExpiresIn,
-                    TokenType = session.TokenType
-                };
-                //await _client.Auth.SetSession(request.AccessToken, request.RefreshToken);
-                return Results.Ok(userResponse);
+                    return Results.BadRequest("User verified by Supabase but not found in local Database.");
+                }
+
+                // 3. Tự tạo Token riêng chứa int UserId
+                var token = GenerateMyOwnToken(internalUser);
+
+                // 4. Trả về Token của BẠN (kèm thông tin user nếu thích)
+                return Results.Ok(new
+                {
+                    Token = token,
+                    UserId = internalUser.UserId,
+                    FullName = internalUser.FullName
+                });
             }
             catch (Supabase.Gotrue.Exceptions.GotrueException ex)
             {
@@ -164,8 +185,31 @@ namespace TravelBuddyAPI.Controllers
                 });
             }
         }
+        private string GenerateMyOwnToken(BusinessObject.Entities.User user)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+        new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        // QUAN TRỌNG: Nhét int UserId vào đây
+        new Claim("UserId", user.UserId.ToString()),
+        new Claim("Role", user.Role ?? "User")
+    };
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddDays(1), // Token sống 1 ngày
+                signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
         [HttpPost("resetpassword")]
-        public async Task<IResult> ResetPassword(string email) 
+        public async Task<IResult> ResetPassword(string email)
         {
             try
             {
@@ -287,19 +331,19 @@ namespace TravelBuddyAPI.Controllers
             }
         }
 
-            [HttpPost("google-session")]
-            public async Task<IActionResult> GoogleSession([FromBody] UserResponseDto dto)
+        [HttpPost("google-session")]
+        public async Task<IActionResult> GoogleSession([FromBody] UserResponseDto dto)
+        {
+            try
             {
-                try
-                {
                 Debug.WriteLine("Received AccessToken: {AccessToken}", dto.AccessToken);
                 Debug.WriteLine("Received RefreshToken: {RefreshToken}", dto.RefreshToken);
 
                 await _client.Auth.SetSession(dto.AccessToken, dto.RefreshToken);
-                    var user = await _client.Auth.GetUser(dto.AccessToken);
+                var user = await _client.Auth.GetUser(dto.AccessToken);
 
-                    if (user == null)
-                        return BadRequest(new { error = "User not found" });
+                if (user == null)
+                    return BadRequest(new { error = "User not found" });
                 BusinessObject.Entities.User? userModel = null;
                 try
                 {
@@ -313,16 +357,16 @@ namespace TravelBuddyAPI.Controllers
                     };
                     await _userService.CreateUserAsync(newUser);
                 }
-                    return Ok(new
-                    {
-                        Email = user.Email
-                    });
-                }
-                catch (Exception ex)
+                return Ok(new
                 {
-                    _logger.LogError(ex, "Error in GoogleSession");
-                    return BadRequest(new { error = "Google session error" });
-                }
+                    Email = user.Email
+                });
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GoogleSession");
+                return BadRequest(new { error = "Google session error" });
+            }
+        }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using BusinessLogic.Exceptions;
-using BusinessLogic.Services;
 using BusinessObject.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Services.Interfaces;
 using Supabase.Gotrue;
 
 namespace TravelBuddyAPI.Controllers

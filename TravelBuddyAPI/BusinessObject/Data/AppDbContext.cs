@@ -1,7 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using BusinessObject.Entities;
+﻿using BusinessObject.Entities;
+using BusinessObject.Enum;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 
 namespace BusinessObject.Data;
 
@@ -53,13 +54,36 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Userpreference> Userpreferences { get; set; }
     public virtual DbSet<Favorite> Favorites { get; set; }
     public virtual DbSet<FeedbackHotel> FeedbackHotels { get; set; }
-
+    public virtual DbSet<Cv> Cvs { get; set; }
+    public virtual DbSet<Template> Templates { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseNpgsql("User Id=postgres.jjcpfegjaqefkmwenosq;Password=Buddy@Trave123;Server=aws-0-ap-southeast-1.pooler.supabase.com;Port=5432;Database=postgres;Timeout=15;CommandTimeout=30");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder
+            .HasPostgresEnum("auth", "aal_level", new[] { "aal1", "aal2", "aal3" })
+            .HasPostgresEnum("auth", "code_challenge_method", new[] { "s256", "plain" })
+            .HasPostgresEnum("auth", "factor_status", new[] { "unverified", "verified" })
+            .HasPostgresEnum("auth", "factor_type", new[] { "totp", "webauthn", "phone" })
+            .HasPostgresEnum("auth", "oauth_authorization_status", new[] { "pending", "approved", "denied", "expired" })
+            .HasPostgresEnum("auth", "oauth_client_type", new[] { "public", "confidential" })
+            .HasPostgresEnum("auth", "oauth_registration_type", new[] { "dynamic", "manual" })
+            .HasPostgresEnum("auth", "oauth_response_type", new[] { "code" })
+            .HasPostgresEnum("auth", "one_time_token_type", new[] { "confirmation_token", "reauthentication_token", "recovery_token", "email_change_token_new", "email_change_token_current", "phone_change_token" })
+            .HasPostgresEnum<CreationSource>("creation_source_enum")
+            .HasPostgresEnum("processing_status_enum", new[] { "pending", "processing", "completed", "failed" })
+            .HasPostgresEnum("realtime", "action", new[] { "INSERT", "UPDATE", "DELETE", "TRUNCATE", "ERROR" })
+            .HasPostgresEnum("realtime", "equality_op", new[] { "eq", "neq", "lt", "lte", "gt", "gte", "in" })
+            .HasPostgresEnum("storage", "buckettype", new[] { "STANDARD", "ANALYTICS", "VECTOR" })
+            .HasPostgresExtension("extensions", "pg_stat_statements")
+            .HasPostgresExtension("extensions", "pgcrypto")
+            .HasPostgresExtension("extensions", "uuid-ossp")
+            .HasPostgresExtension("graphql", "pg_graphql")
+            .HasPostgresExtension("unaccent")
+            .HasPostgresExtension("vault", "supabase_vault");
+
         modelBuilder.Entity<Favorite>(entity =>
         {
             entity.HasKey(e => e.FavoriteId).HasName("favorite_pkey");
@@ -83,6 +107,8 @@ public partial class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("favorite_user_id_fkey");
         });
+
+
 
         modelBuilder.Entity<PaymentHistory>(entity =>
         {
@@ -158,22 +184,7 @@ public partial class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("comment_blog_parent_comment_id_fkey");
         });
-        modelBuilder
-            .HasPostgresEnum("auth", "aal_level", new[] { "aal1", "aal2", "aal3" })
-            .HasPostgresEnum("auth", "code_challenge_method", new[] { "s256", "plain" })
-            .HasPostgresEnum("auth", "factor_status", new[] { "unverified", "verified" })
-            .HasPostgresEnum("auth", "factor_type", new[] { "totp", "webauthn", "phone" })
-            .HasPostgresEnum("auth", "oauth_registration_type", new[] { "dynamic", "manual" })
-            .HasPostgresEnum("auth", "one_time_token_type", new[] { "confirmation_token", "reauthentication_token", "recovery_token", "email_change_token_new", "email_change_token_current", "phone_change_token" })
-            .HasPostgresEnum("realtime", "action", new[] { "INSERT", "UPDATE", "DELETE", "TRUNCATE", "ERROR" })
-            .HasPostgresEnum("realtime", "equality_op", new[] { "eq", "neq", "lt", "lte", "gt", "gte", "in" })
-            .HasPostgresEnum("storage", "buckettype", new[] { "STANDARD", "ANALYTICS" })
-            .HasPostgresExtension("extensions", "pg_stat_statements")
-            .HasPostgresExtension("extensions", "pgcrypto")
-            .HasPostgresExtension("extensions", "uuid-ossp")
-            .HasPostgresExtension("graphql", "pg_graphql")
-            .HasPostgresExtension("unaccent")
-            .HasPostgresExtension("vault", "supabase_vault");
+        
 
         modelBuilder.Entity<Blog>(entity =>
         {
@@ -714,7 +725,76 @@ public partial class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("feedback_hotel_hotel_id_fkey");
         });
+        modelBuilder.Entity<Cv>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("cvs_pkey");
 
+            entity.ToTable("cvs");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.CvRawData)
+                .HasColumnType("character varying")
+                .HasColumnName("cv_raw_data");
+            entity.Property(e => e.DataJson)
+                .HasColumnType("jsonb")
+                .HasColumnName("data_json");
+            entity.Property(e => e.IsPublished).HasColumnName("is_published");
+            entity.Property(e => e.JdRawData)
+                .HasColumnType("character varying")
+                .HasColumnName("jd_raw_data");
+            entity.Property(e => e.LayoutConfig)
+                .HasColumnType("jsonb")
+                .HasColumnName("layout_config");
+            entity.Property(e => e.Slug)
+                .HasColumnType("character varying")
+                .HasColumnName("slug");
+            entity.Property(e => e.StyleConfig)
+                .HasColumnType("jsonb")
+                .HasColumnName("style_config");
+            entity.Property(e => e.TemplateId).HasColumnName("template_id");
+            entity.Property(e => e.ThumbnailUrl)
+                .HasColumnType("character varying")
+                .HasColumnName("thumbnail_url");
+            entity.Property(e => e.Title)
+                .HasColumnType("character varying")
+                .HasColumnName("title");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("updated_at");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Version).HasColumnName("version");
+
+            entity.HasOne(d => d.Template).WithMany(p => p.Cvs)
+                .HasForeignKey(d => d.TemplateId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("cvs_template_id_fkey");
+        });
+
+        modelBuilder.Entity<Template>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("templates_pkey");
+
+            entity.ToTable("templates");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.DefaultDataJson)
+                .HasColumnType("jsonb")
+                .HasColumnName("default_data_json");
+            entity.Property(e => e.DefaultLayout)
+                .HasColumnType("jsonb")
+                .HasColumnName("default_layout");
+            entity.Property(e => e.IsPremium).HasColumnName("is_premium");
+            entity.Property(e => e.Name)
+                .HasColumnType("character varying")
+                .HasColumnName("name");
+            entity.Property(e => e.PreviewImage)
+                .HasColumnType("character varying")
+                .HasColumnName("preview_image");
+            entity.Property(e => e.StyleSchema)
+                .HasColumnType("jsonb")
+                .HasColumnName("style_schema");
+        });
         OnModelCreatingPartial(modelBuilder);
     }
 
