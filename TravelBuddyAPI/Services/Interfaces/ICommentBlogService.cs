@@ -1,0 +1,14 @@
+using BusinessObject.DTOs;
+
+namespace Services.Interfaces
+{
+    public interface ICommentBlogService
+    {
+        Task<CommentTreeDto> CreateAsync(CommentCreateRequestDto request);
+        Task<List<CommentTreeDto>> GetByBlogIdAsync(string blogId);
+        Task UpdateAsync(int commentId, CommentUpdateRequestDto request);
+        Task DeleteAsync(int commentId);
+    }
+}
+
+

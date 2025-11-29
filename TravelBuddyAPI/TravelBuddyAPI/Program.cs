@@ -1,10 +1,13 @@
-
-using BusinessLogic.Services;
 using BusinessObject.Data;
 using BusinessObject.DTOs;
 using Microsoft.EntityFrameworkCore;
-using Repositories;
-using Services;
+using Microsoft.Extensions.DependencyInjection;
+using Repositories.Implements;
+using Repositories.Interfaces;
+using Services.Implement;
+using Services.Interfaces;
+using Services.NewFolder;
+using TravelBuddyAPI.Models;
 
 namespace TravelBuddyAPI
 {
@@ -16,6 +19,23 @@ namespace TravelBuddyAPI
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
             var builder = WebApplication.CreateBuilder(args);
 
+            if (builder.Environment.IsDevelopment())
+            {
+                builder.Configuration.AddUserSecrets<Program>(optional: true);
+            }
+            //var configuration = builder.Configuration.Get<Config>() ?? new Config();
+            //builder.Services.AddSingleton(configuration);
+            //if(configuration.Provider == "Gemini")
+            //{
+
+            //}
+
+            builder.Services.AddHttpClient<IFileParserService, ExternalFileParserService>(client =>
+            {
+                // URL của Python/Node Service
+                // Nếu chạy Docker cùng nhau thì dùng tên container, ví dụ: http://parser-service:8001
+                client.BaseAddress = new Uri("http://localhost:8001");
+            });
             // Add Supabase for authentication only
             // --- Supabase config ---
             var url = builder.Configuration["Supabase:Url"];
@@ -37,6 +57,10 @@ namespace TravelBuddyAPI
             builder.Services.Configure<PayOsSettings>(builder.Configuration.GetSection("PayOS"));
             builder.Services.AddSingleton<PayOsService>();
             builder.Services.AddSingleton(provider => new Supabase.Client(url, key, options));
+            builder.Services.AddHttpClient<IFileParserService, ExternalFileParserService>(client =>
+            {
+                client.BaseAddress = new Uri("http://127.0.0.1:8001");
+            });
             builder.Services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
             builder.Services.AddScoped<IPaymentHistoryService, PaymentHistoryService>();
 
