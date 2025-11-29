@@ -4,6 +4,8 @@ using BusinessObject.DTOs;
 using BusinessObject.Entities;
 using Microsoft.EntityFrameworkCore;
 using Repositories;
+using Repositories.Interfaces;
+using Services.Interfaces;
 using System.IO.Pipes;
 
 namespace BusinessLogic.Services;
