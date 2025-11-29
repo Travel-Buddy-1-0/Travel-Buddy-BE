@@ -9,8 +9,7 @@ namespace BusinessObject.Entities
     public partial class CommentBlog
     {
         public int CommentId { get; set; }
-
-        public int BlogId { get; set; }  
+        public string BlogOnlineId { get; set; }
 
         public int? UserId { get; set; }  
 
@@ -22,7 +21,6 @@ namespace BusinessObject.Entities
 
         public int? ParentCommentId { get; set; } 
 
-        public virtual Blog Blog { get; set; } = null!;
 
         public virtual User? User { get; set; }
 

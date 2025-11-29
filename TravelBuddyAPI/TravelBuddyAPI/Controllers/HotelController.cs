@@ -46,6 +46,27 @@ namespace TravelBuddyAPI.Controllers
             var data = await _hotelService.GetDetailAsync(id);
             return Ok(data);
         }
+        [HttpGet("vouchers")]
+        public async Task<IActionResult> GetActiveVouchers()
+        {
+            var data = await _hotelService.GetActiveVouchersAsync();
+            return Ok(data);
+        }
+
+        [HttpGet("vouchers/{code}")]
+        public async Task<IActionResult> GetVoucherDetails([FromRoute] string code)
+        {
+            var voucherDto = await _hotelService.GetVoucherByCodeAsync(code);
+
+            if (voucherDto == null)
+            {
+                // Trả về 404 Not Found nếu không tìm thấy
+                return NotFound(new { message = $"Không tìm thấy voucher với mã: '{code}'" });
+            }
+
+            // Trả về 200 OK cùng thông tin voucher
+            return Ok(voucherDto);
+        }
 
         // -1 api nhận vào thông tin khách hàng + ... + hotel id được đặt
         [HttpPost("book")]

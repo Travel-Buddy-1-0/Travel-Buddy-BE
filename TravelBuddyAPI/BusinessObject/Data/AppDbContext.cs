@@ -22,6 +22,9 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Conversation> Conversations { get; set; }
 
+    public virtual DbSet<Voucher> Vouchers { get; set; }
+    public virtual DbSet<PaymentHistory> PaymentHistories { get; set; }
+
     public virtual DbSet<Group> Groups { get; set; }
 
     public virtual DbSet<Hotel> Hotels { get; set; }
@@ -48,6 +51,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Useractivity> Useractivities { get; set; }
 
     public virtual DbSet<Userpreference> Userpreferences { get; set; }
+    public virtual DbSet<Favorite> Favorites { get; set; }
+    public virtual DbSet<FeedbackHotel> FeedbackHotels { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -55,6 +60,72 @@ public partial class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Favorite>(entity =>
+        {
+            entity.HasKey(e => e.FavoriteId).HasName("favorite_pkey");
+
+            entity.ToTable("favorite");
+
+            entity.Property(e => e.FavoriteId).HasColumnName("favorite_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.TargetType)
+                .HasMaxLength(50)
+                .HasColumnName("target_type");
+            entity.Property(e => e.TargetId).HasColumnName("target_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.Favorites)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("favorite_user_id_fkey");
+        });
+
+        modelBuilder.Entity<PaymentHistory>(entity =>
+        {
+            entity.ToTable("payment_history");
+                        entity.HasKey(e => e.PaymentId)
+                  .HasName("pk_payment_history");
+            entity.Property(e => e.PaymentId)
+                  .HasColumnName("payment_id");
+            entity.Property(e => e.UserId)
+                  .HasColumnName("user_id");
+            entity.Property(e => e.Amount)
+                  .HasColumnName("amount")
+                  .HasPrecision(12, 2);
+            entity.Property(e => e.Currency)
+                  .HasColumnName("currency")
+                  .HasMaxLength(10)
+                  .HasDefaultValueSql("'VND'");
+            entity.Property(e => e.PaymentMethod)
+                  .HasColumnName("payment_method")
+                  .HasMaxLength(50)
+                  .HasDefaultValueSql("'PayOS'");
+            entity.Property(e => e.TransactionCode)
+                  .HasColumnName("transaction_code")
+                  .HasMaxLength(100);
+            entity.Property(e => e.Status)
+                  .HasColumnName("status")
+                  .HasMaxLength(20);
+            entity.Property(e => e.Description)
+                  .HasColumnName("description");
+            entity.Property(e => e.CreatedAt)
+                  .HasColumnName("created_at")
+                  .HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt)
+                  .HasColumnName("update_at")
+                  .HasDefaultValueSql("NOW()");
+            // Quan hệ với User
+            entity.HasOne(d => d.User)
+                  .WithMany(p => p.PaymentHistories)
+                  .HasForeignKey(d => d.UserId)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("fk_payment_history_user");
+        });
+
         modelBuilder.Entity<CommentBlog>(entity =>
         {
             entity.HasKey(e => e.CommentId).HasName("comment_blog_pkey");
@@ -62,7 +133,8 @@ public partial class AppDbContext : DbContext
             entity.ToTable("comment_blog");
 
             entity.Property(e => e.CommentId).HasColumnName("comment_id");
-            entity.Property(e => e.BlogId).HasColumnName("blog_id");
+            entity.Property(e => e.BlogOnlineId).HasColumnName("blog_online_id");
+
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Content).HasColumnName("content");
             entity.Property(e => e.CreatedAt)
@@ -73,12 +145,6 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
             entity.Property(e => e.ParentCommentId).HasColumnName("parent_comment_id");
-
-            // Quan hệ với Blog
-            entity.HasOne(d => d.Blog).WithMany(p => p.Comments)
-                .HasForeignKey(d => d.BlogId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("comment_blog_blog_id_fkey");
 
             // Quan hệ với User
             entity.HasOne(d => d.User).WithMany(p => p.CommentBlogs)
@@ -147,6 +213,28 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.RestaurantId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("blog_restaurant_id_fkey");
+        });
+        modelBuilder.Entity<Voucher>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("vouchers_pkey");
+            entity.ToTable("vouchers");
+
+            // Map từng thuộc tính C# (PascalCase) sang cột DB (snake_case)
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code");
+            entity.Property(e => e.Description).HasColumnName("description");
+
+            entity.Property(e => e.DiscountType)
+                  .HasColumnName("discount_type")
+                  .HasConversion<int>(); // Lưu Enum dưới dạng số nguyên
+
+            entity.Property(e => e.DiscountValue).HasColumnName("discount_value");
+            entity.Property(e => e.MinBookingAmount).HasColumnName("min_booking_amount");
+            entity.Property(e => e.StartDate).HasColumnName("start_date");
+            entity.Property(e => e.EndDate).HasColumnName("end_date");
+            entity.Property(e => e.MaxUsageCount).HasColumnName("max_usage_count");
+            entity.Property(e => e.CurrentUsageCount).HasColumnName("current_usage_count");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
         });
 
         modelBuilder.Entity<Bookingdetail>(entity =>
@@ -220,6 +308,9 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.Note)
                 .HasColumnName("note");
+            entity.Property(e => e.OriginalPrice).HasColumnName("original_price");
+            entity.Property(e => e.DiscountAmount).HasColumnName("discount_amount");
+            entity.Property(e => e.VoucherCode).HasColumnName("voucher_code");
         });
 
         modelBuilder.Entity<Conversation>(entity =>
@@ -592,6 +683,36 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("userpreference_user_id_fkey");
+        });
+
+        modelBuilder.Entity<FeedbackHotel>(entity =>
+        {
+            entity.HasKey(e => e.FeedbackId).HasName("feedback_hotel_pkey");
+
+            entity.ToTable("feedback_hotel");
+
+            entity.Property(e => e.FeedbackId).HasColumnName("feedback_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.HotelId).HasColumnName("hotel_id");
+            entity.Property(e => e.Rating).HasColumnName("rating");
+            entity.Property(e => e.Comment).HasColumnName("comment");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("feedback_hotel_user_id_fkey");
+
+            entity.HasOne(d => d.Hotel).WithMany()
+                .HasForeignKey(d => d.HotelId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("feedback_hotel_hotel_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

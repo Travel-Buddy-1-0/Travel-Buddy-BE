@@ -14,17 +14,30 @@ public class PayOsService
 
     public PayOsService(IOptions<PayOsSettings> options)
     {
+        if (options.Value == null)
+        {
+            throw new InvalidOperationException("PayOS configuration section is missing or invalid.");
+        }
         var settings = options.Value;
+        _checksumKey = settings.ChecksumKey ??
+                       throw new InvalidOperationException("PayOS ChecksumKey is NULL. Check appsettings.json/user secrets.");
+
+        var clientId = settings.ClientId ??
+                       throw new InvalidOperationException("PayOS ClientId is NULL. Check appsettings.json/user secrets.");
+
+        var apiKey = settings.ApiKey ??
+                     throw new InvalidOperationException("PayOS ApiKey is NULL. Check appsettings.json/user secrets.");
+
         _returnUrl = settings.ReturnUrl;
         _cancelUrl = settings.CancelUrl;
-        _checksumKey = settings.ChecksumKey;
 
-        _payOS = new PayOS(settings.ClientId, settings.ApiKey, settings.ChecksumKey);
+        // Nếu ChecksumKey bị null, lỗi sẽ xảy ra ở dòng trên, ngăn việc khởi tạo PayOS với khóa rỗng.
+        _payOS = new PayOS(clientId, apiKey, _checksumKey);
     }
 
-    public async Task<string> CreatePaymentLink(string description, int amount)
+    public async Task<string> CreatePaymentLink(string description, int amount, long orderCode)
     {
-        var orderCodeLong = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        //var orderCodeLong = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         var items = new List<ItemData>
         {
@@ -32,7 +45,7 @@ public class PayOsService
         };
 
         var paymentRequest = new PaymentData(
-            orderCode: orderCodeLong,
+            orderCode: orderCode,
             amount: amount,
             description: description,
             items: items,
@@ -44,12 +57,36 @@ public class PayOsService
         return paymentLink.checkoutUrl;
     }
 
-    public bool VerifySignature(string rawBody, string signature)
+    public async Task ConfigWebhookUrl(string newWebhookUrl)
     {
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_checksumKey));
-        var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(rawBody));
-        var computedSignature = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+        try
+        {
+            // newWebhookUrl phải là đường dẫn công khai (Public HTTPS URL) của Endpoint bạn đã tạo ở Bước 1
+            string result = await _payOS.confirmWebhook(newWebhookUrl);
 
-        return computedSignature == signature.ToLower();
+            // `result` sẽ là một chuỗi JSON chứa kết quả xác thực và cấu hình
+            Console.WriteLine($"Webhook confirmation result: {result}");
+
+            // Nếu thành công, URL Webhook của bạn sẽ được thiết lập hoặc cập nhật.
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error confirming webhook: {ex.Message}");
+        }
+    }
+    public bool VerifyWebhookSignature(WebhookType webhookBody)
+    {
+        try
+        {
+            // Sử dụng phương thức có sẵn của thư viện PayOS
+            _payOS.verifyPaymentWebhookData(webhookBody);
+            return true; // Nếu không có exception, chữ ký hợp lệ
+        }
+        catch (Exception ex)
+        {
+            // Thư viện sẽ ném ra Exception nếu chữ ký không hợp lệ
+            Console.WriteLine($"Signature verification failed: {ex.Message}");
+            return false;
+        }
     }
 }

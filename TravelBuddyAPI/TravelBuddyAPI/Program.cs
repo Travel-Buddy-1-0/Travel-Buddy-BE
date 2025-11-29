@@ -1,12 +1,10 @@
 
 using BusinessLogic.Services;
-using BusinessLogic.Services;
 using BusinessObject.Data;
 using BusinessObject.DTOs;
 using Microsoft.EntityFrameworkCore;
 using Repositories;
 using Services;
-using Supabase;
 
 namespace TravelBuddyAPI
 {
@@ -15,7 +13,7 @@ namespace TravelBuddyAPI
         public static void Main(string[] args)
         {
             AppContext.SetSwitch("System.Net.Sockets.UseOnlyIPv4Stack", true);
-            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);            
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
             var builder = WebApplication.CreateBuilder(args);
 
             // Add Supabase for authentication only
@@ -39,16 +37,28 @@ namespace TravelBuddyAPI
             builder.Services.Configure<PayOsSettings>(builder.Configuration.GetSection("PayOS"));
             builder.Services.AddSingleton<PayOsService>();
             builder.Services.AddSingleton(provider => new Supabase.Client(url, key, options));
+            builder.Services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
+            builder.Services.AddScoped<IPaymentHistoryService, PaymentHistoryService>();
+
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
+            builder.Services.AddScoped<IFeedbackHotelRepository, FeedbackHotelRepository>();
+            builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
             builder.Services.AddScoped<IHotelRepository, HotelRepository>();
             builder.Services.AddScoped<IRoomRepository, RoomRepository>();
             builder.Services.AddScoped<ICommentBlogRepository, CommentBlogRepository>();
+            builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
+            builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IUserActivityService, UserActivityService>();
+            builder.Services.AddScoped<IFeedbackHotelService, FeedbackHotelService>();
+            builder.Services.AddScoped<IReviewService, ReviewService>();
             builder.Services.AddScoped<IHotelService, HotelService>();
             builder.Services.AddScoped<IRoomService, RoomService>();
             builder.Services.AddScoped<ICommentBlogService, CommentBlogService>();
+            builder.Services.AddScoped<IFavoriteService, FavoriteService>();
             builder.Services.AddControllers();
 
             // --- CORS ---
@@ -96,9 +106,9 @@ namespace TravelBuddyAPI
 
             app.UseHttpsRedirection();
 
-            app.UseCors("AllowAll");       
+            app.UseCors("AllowAll");
 
-            app.UseAuthentication();     
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();

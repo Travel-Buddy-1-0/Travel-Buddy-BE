@@ -10,8 +10,12 @@ public interface IHotelService
     Task<HotelDetailDto> GetDetailAsync(int hotelId);
     Task<int> BookAsync(HotelBookingRequestDto request, int userId);
     Task<List<BookingHistoryDto>> GetBookingHistoryAsync(int userId, DateOnly? bookingDate);
-    Task<List<ReviewDto1>> GetReviewsAsync(int hotelId, int? rating, int limit = 20, int offset = 0);
+    Task<List<ReviewDto>> GetReviewsAsync(int hotelId, int? rating, int limit = 20, int offset = 0);
     Task<int> ChangeStatusBookingAsync(int bookingId, int status);
+
+    Task<List<VoucherDto>> GetActiveVouchersAsync();
+
+    Task<VoucherDto?> GetVoucherByCodeAsync(string code);
 }
 
 

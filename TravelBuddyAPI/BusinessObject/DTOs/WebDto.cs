@@ -1,7 +1,21 @@
-﻿using System.Text.Json.Nodes;
+﻿using BusinessObject.Entities;
+using System.Text.Json.Nodes;
 
 namespace BusinessObject.DTOs
 {
+    public class VoucherDto
+    {
+        public string Code { get; set; }
+        public string Description { get; set; }
+        public DiscountType DiscountType { get; set; }
+        public decimal DiscountValue { get; set; }
+        public decimal MinBookingAmount { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public int MaxUsageCount { get; set; }
+        public int CurrentUsageCount { get; set; }
+        public bool IsActive { get; set; }
+    }
     public class UserDto
     {
         public int UserId { get; set; }
@@ -14,6 +28,8 @@ namespace BusinessObject.DTOs
         public string? Photo { get; set; }
         public string Role { get; set; } = null!;
         public string? Sex { get; set; }
+
+        public decimal? WalletBalance { get; set; }
     }
 
     public class AuthRequestDto
@@ -94,19 +110,6 @@ namespace BusinessObject.DTOs
         public string? Address { get; set; }
     }
 
-    public class ReviewDto
-    {
-        public int ReviewId { get; set; }
-        public int? UserId { get; set; }
-        public int? TourId { get; set; }
-        public int? HotelId { get; set; }
-        public int? RestaurantId { get; set; }
-        public int? Rating { get; set; }
-        public string? Comment { get; set; }
-        public string? Image { get; set; }
-        public DateTime? ReviewDate { get; set; }
-    }
-
     public class RoomDto1
     {
         public int RoomId { get; set; }
@@ -137,15 +140,6 @@ namespace BusinessObject.DTOs
         public int? Duration { get; set; }
         public decimal? Price { get; set; }
         public int? LocationId { get; set; }
-    }
-
-    public class UserActivityDto
-    {
-        public int ActivityId { get; set; }
-        public int? UserId { get; set; }
-        public string? ActivityType { get; set; }
-        public DateTime? ActivityDate { get; set; }
-        public string? Metadata { get; set; }
     }
 
     public class UserPreferenceDto

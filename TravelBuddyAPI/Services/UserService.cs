@@ -81,6 +81,16 @@ public class UserService : IUserService
         await _userRepository.DeleteUserAsync(user.UserId);
     }
 
+    public async Task<User> Deposit(int id, decimal amount)
+    {
+        var user = await _userRepository.GetUserByIdAsync(id);
+        if (user == null) return null;
+
+        user.WalletBalance += amount;
+        await _userRepository.UpdateUserAsync(user);
+        return user;
+    }
+
     public async Task<User> LoginAsync(string email, string password)
     {
         var user = await _userRepository.GetUserByEmailAsync(email);

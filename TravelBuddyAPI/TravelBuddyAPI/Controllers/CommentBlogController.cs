@@ -17,7 +17,7 @@ namespace TravelBuddyAPI.Controllers
 
         // POST /api/blogs/{blogId}/comments
         [HttpPost("blogs/{blogId}/comments")]
-        public async Task<ActionResult<CommentTreeDto>> Create(int blogId, [FromBody] CommentCreateRequestDto request)
+        public async Task<ActionResult<CommentTreeDto>> Create(string blogId, [FromBody] CommentCreateRequestDto request)
         {
             if (blogId != request.BlogId)
             {
@@ -29,7 +29,7 @@ namespace TravelBuddyAPI.Controllers
 
         // GET /api/blogs/{blogId}/comments (tree)
         [HttpGet("blogs/{blogId}/comments")]
-        public async Task<ActionResult<List<CommentTreeDto>>> GetByBlogId(int blogId)
+        public async Task<ActionResult<List<CommentTreeDto>>> GetByBlogId(string blogId)
         {
             var result = await _service.GetByBlogIdAsync(blogId);
             return Ok(result);

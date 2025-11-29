@@ -1,7 +1,10 @@
 ﻿using BusinessLogic.Exceptions;
+using BusinessObject.Data;
 using BusinessObject.DTOs;
 using BusinessObject.Entities;
+using Microsoft.EntityFrameworkCore;
 using Repositories;
+using System.IO.Pipes;
 
 namespace BusinessLogic.Services;
 
@@ -9,11 +12,16 @@ public class HotelService : IHotelService
 {
     private readonly IHotelRepository _hotelRepository;
     private readonly IUserRepository _userRepository;
-
-    public HotelService(IHotelRepository hotelRepository, IUserRepository userRepository)
+    private readonly IPaymentHistoryRepository _paymentHistoryRepository;
+    private readonly IVoucherRepository _voucherRepository;
+    private readonly AppDbContext _dbContext;
+    public HotelService(IHotelRepository hotelRepository, IUserRepository userRepository, IPaymentHistoryRepository paymentHistoryRepository, IVoucherRepository voucherRepository, AppDbContext dbContext)
     {
         _hotelRepository = hotelRepository;
         _userRepository = userRepository;
+        _paymentHistoryRepository = paymentHistoryRepository;
+        _voucherRepository = voucherRepository;
+        _dbContext = dbContext;
     }
 
     public async Task<List<HotelSummaryDto>> GetSuggestionsAsync(int limit = 4)
@@ -84,50 +92,107 @@ public class HotelService : IHotelService
     public async Task<int> BookAsync(HotelBookingRequestDto request, int userId)
     {
         var hotel = await _hotelRepository.GetByIdAsync(request.HotelId) ?? throw new NotFoundException($"Hotel {request.HotelId} not found");
-        if (request.TypePayment == 2)
+        decimal originalPrice = (decimal)request.TotalPrice; // Giá gốc
+        decimal finalPrice = originalPrice;
+        decimal discountAmount = 0;
+        Voucher? appliedVoucher = null;
+        if (!string.IsNullOrEmpty(request.VoucherCode))
         {
-            var user = await _userRepository.GetUserByIdAsync(userId);
-            if (user == null)
-            {
+            appliedVoucher = await _voucherRepository.GetByCodeAsync(request.VoucherCode);
 
-                throw new NotFoundException($"User {request.HotelId} not found");
+            // Validation...
+            if (appliedVoucher == null) throw new Exception("Voucher không tồn tại.");
+            //if (!appliedVoucher.IsActive) throw new Exception("Voucher đã bị vô hiệu hóa."); // Dùng C# PascalCase
+            if (DateTime.UtcNow > appliedVoucher.EndDate) throw new Exception("Voucher đã hết hạn.");
+            if (appliedVoucher.CurrentUsageCount >= appliedVoucher.MaxUsageCount) throw new Exception("Voucher đã hết lượt sử dụng.");
+            if (originalPrice < appliedVoucher.MinBookingAmount)
+                throw new Exception($"Đơn hàng phải từ {appliedVoucher.MinBookingAmount:N0} VNĐ.");
+
+            // Tính toán
+            if (appliedVoucher.DiscountType == DiscountType.Percentage)
+            {
+                discountAmount = originalPrice * (appliedVoucher.DiscountValue / 100);
             }
             else
             {
-                if (request.TotalPrice > user.WalletBalance)
+                discountAmount = appliedVoucher.DiscountValue;
+            }
+            finalPrice = originalPrice - discountAmount;
+            if (finalPrice < 0) finalPrice = 0;
+        }
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            // Trừ tiền ví (dùng finalPrice)
+            if (request.TypePayment == 2)
+            {
+                var user = await _userRepository.GetUserByIdAsync(userId);
+                if (user == null) throw new NotFoundException($"User {userId} not found");
+                if (finalPrice > user.WalletBalance) // Dùng finalPrice
                 {
                     throw new Exception($"Your wallet balance is insufficient!");
                 }
+                user.WalletBalance = user.WalletBalance - finalPrice; // Dùng finalPrice
+                await _userRepository.UpdateUserAsync(user);
             }
-        }
 
-        var detail = new Bookingdetail
-        {
-            UserId = userId,
-            HotelId = request.HotelId,
-            CheckInDate = request.CheckIn,
-            CheckOutDate = request.CheckOut,
-            TotalPrice = request.TotalPrice,
-            Status = 1,
-            RoomId = request.RoomId,
-            RestaurantId = request.RestaurantId,
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Email = request.Email,
-            Phone = request.Phone,
-            Note = request.Note,
-            Country = request.Country
-        };
-        if (request.TypePayment == 0)
-        {
-            detail.Status = 0;
+            // Tạo Bookingdetail (với các trường giá mới)
+            var detail = new Bookingdetail
+            {
+                UserId = userId,
+                HotelId = request.HotelId,
+                CheckInDate = request.CheckIn,
+                CheckOutDate = request.CheckOut,
+                Status = 1,
+                RoomId = request.RoomId,
+                RestaurantId = request.RestaurantId,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                Phone = request.Phone,
+                Note = request.Note,
+                Country = request.Country,
+                OriginalPrice = originalPrice,
+                DiscountAmount = discountAmount,
+                VoucherCode = request.VoucherCode,
+                TotalPrice = finalPrice
+            };
+            if (request.TypePayment == 0)
+            {
+                detail.Status = 0;
+            }
+            else if (request.TypePayment == 1 || request.TypePayment == 2)
+            {
+                detail.Status = 1;
+            }
+            var created = await _hotelRepository.CreateBookingAsync(detail);
+
+            // Cập nhật số lượt dùng voucher (nếu có)
+            if (appliedVoucher != null)
+            {
+                appliedVoucher.CurrentUsageCount++; // Dùng C# PascalCase
+                await _voucherRepository.UpdateAsync(appliedVoucher);
+            }
+
+            PaymentHistory paymentHistory = new PaymentHistory();
+            paymentHistory.UserId = userId;
+            paymentHistory.Amount = (decimal)finalPrice;
+            paymentHistory.PaymentMethod = "Wallet";
+            paymentHistory.Status = "Done";
+            paymentHistory.Description = "Thanh toán đơn hàng " +created.BookingId +" bằng ví thành công";
+            paymentHistory.CreatedAt = DateTime.Now;
+            var random = new Random();
+            paymentHistory.TransactionCode = ((long)random.Next() << 32) | (long)random.Next();
+            await _paymentHistoryRepository.AddAsync(paymentHistory);
+
+            await transaction.CommitAsync(); // Lưu tất cả thay đổi
+            return created.BookingId;
         }
-        else if (request.TypePayment == 1 || request.TypePayment == 2)
+        catch (Exception)
         {
-            detail.Status = 1;
+            await transaction.RollbackAsync(); // Hoàn tác nếu có lỗi
+            throw;
         }
-        var created = await _hotelRepository.CreateBookingAsync(detail);
-        return created.BookingId;
     }
 
     public async Task<List<BookingHistoryDto>> GetBookingHistoryAsync(int userId, DateOnly? bookingDate)
@@ -151,23 +216,27 @@ public class HotelService : IHotelService
             Note = b.Note,
             Country = b.Country,
             Status = b.Status
-
         }).ToList();
     }
 
-    public async Task<List<ReviewDto1>> GetReviewsAsync(int hotelId, int? rating, int limit = 20, int offset = 0)
+    public async Task<List<ReviewDto>> GetReviewsAsync(int hotelId, int? rating, int limit = 20, int offset = 0)
     {
         var reviews = await _hotelRepository.GetReviewsByHotelAsync(hotelId, rating, limit, offset);
-        return reviews.Select(r => new ReviewDto1
+        return reviews.Select(r => new ReviewDto
         {
             ReviewId = r.ReviewId,
             UserId = r.UserId,
-            ReviewerName = r.User?.FullName ?? r.User?.Username,
+            TourId = r.TourId,
             HotelId = r.HotelId,
+            RestaurantId = r.RestaurantId,
             Rating = r.Rating,
             Comment = r.Comment,
             Image = r.Image,
-            ReviewDate = r.ReviewDate
+            ReviewDate = r.ReviewDate,
+            UserName = r.User?.FullName ?? r.User?.Username,
+            HotelName = r.Hotel?.Name,
+            RestaurantName = r.Restaurant?.Name,
+            TourName = r.Tour?.Title
         }).ToList();
     }
 
@@ -206,6 +275,62 @@ public class HotelService : IHotelService
     public Task<int> ChangeStatusBookingAsync(int bookingId, int status)
     {
         return _hotelRepository.ChangeStatusBookingAsync(bookingId, status);
+    }
+
+    public async Task<List<VoucherDto>> GetActiveVouchersAsync()
+    {
+        try
+        {
+            var vouchers = await _voucherRepository.GetActiveVouchersAsync();
+
+
+            return vouchers.Select(v => new VoucherDto
+            {
+                Code = v.Code,
+                Description = v.Description,
+                DiscountType = v.DiscountType,
+                DiscountValue = v.DiscountValue,
+                MinBookingAmount = v.MinBookingAmount,
+                StartDate = v.StartDate,
+                EndDate = v.EndDate,
+                MaxUsageCount = v.MaxUsageCount,
+                CurrentUsageCount = v.CurrentUsageCount,
+                IsActive = v.IsActive
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine("--- !!! LỖI TRONG HotelService.GetActiveVouchersAsync !!! ---");
+            // Ghi log đầy đủ stack trace
+            System.Diagnostics.Debug.WriteLine(ex.ToString());
+            throw; // Ném lỗi lại để API báo lỗi 500
+        }
+    }
+    public async Task<VoucherDto?> GetVoucherByCodeAsync(string code)
+    {
+        // 1. Gọi repository để tìm voucher
+        var voucher = await _voucherRepository.GetByCodeAsync(code);
+
+        // 2. Nếu không tìm thấy, trả về null
+        if (voucher == null)
+        {
+            return null;
+        }
+
+        // 3. Nếu tìm thấy, map sang DTO để trả về
+        return new VoucherDto
+        {
+            Code = voucher.Code,
+            Description = voucher.Description,
+            DiscountType = voucher.DiscountType,
+            DiscountValue = voucher.DiscountValue,
+            MinBookingAmount = voucher.MinBookingAmount,
+            StartDate = voucher.StartDate,
+            EndDate = voucher.EndDate,
+            MaxUsageCount = voucher.MaxUsageCount,
+            CurrentUsageCount = voucher.CurrentUsageCount,
+            IsActive = voucher.IsActive
+        };
     }
 }
 

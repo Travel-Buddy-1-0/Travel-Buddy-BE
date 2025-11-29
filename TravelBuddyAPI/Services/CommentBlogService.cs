@@ -17,7 +17,7 @@ namespace Services
         {
             var entity = new CommentBlog
             {
-                BlogId = request.BlogId,
+                BlogOnlineId = request.BlogId,
                 UserId = request.UserId,
                 Content = request.Content,
                 ParentCommentId = request.ParentCommentId,
@@ -27,7 +27,7 @@ namespace Services
             return MapToDto(created);
         }
 
-        public async Task<List<CommentTreeDto>> GetByBlogIdAsync(int blogId)
+        public async Task<List<CommentTreeDto>> GetByBlogIdAsync(string blogId)
         {
             var allComments = await _repository.GetByBlogIdAsync(blogId);
 
@@ -67,12 +67,13 @@ namespace Services
 
         private static CommentTreeDto MapToDto(CommentBlog c)
         {
-            return new CommentTreeDto
+             return new CommentTreeDto
             {
                 CommentId = c.CommentId,
-                BlogId = c.BlogId,
+                BlogId = c.BlogOnlineId,
                 UserId = c.UserId,
                 Content = c.Content,
+                UserName = c.User.FullName,
                 CreatedAt = c.CreatedAt,
                 UpdatedAt = c.UpdatedAt,
                 ParentCommentId = c.ParentCommentId,
